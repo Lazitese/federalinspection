@@ -1,5 +1,6 @@
 import { Menubar } from "@/components/menubar";
 import { HeroSection } from "@/components/hero-section";
+import { ChairmanMessageSection } from "@/components/chairman-message-section";
 import { NewsMessagesSection } from "@/components/news-messages-section";
 import { MembersSection } from "@/components/members-section";
 import { AboutMissionVisionSection } from "@/components/about-mission-vision-section";
@@ -13,6 +14,7 @@ export default function Home() {
       <Menubar />
       <main id="main-content">
         <HeroSection />
+        <ChairmanMessageSection />
         <NewsMessagesSection />
         <MembersSection />
         <AboutMissionVisionSection />

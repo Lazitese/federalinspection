@@ -39,10 +39,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakarta.variable} ${instrumentSerif.variable} h-full antialiased overflow-hidden`}
+      className={`${plusJakarta.variable} ${instrumentSerif.variable} min-h-full antialiased scroll-smooth`}
       suppressHydrationWarning
     >
-      <body className="h-full overflow-hidden font-sans" suppressHydrationWarning>
+      <body className="min-h-full font-sans" suppressHydrationWarning>
         <SocketProvider>
           <I18nProvider>
             <a

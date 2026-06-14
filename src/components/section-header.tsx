@@ -7,7 +7,6 @@ interface SectionHeaderProps {
   id?: string;
   align?: "center" | "left";
   className?: string;
-  dark?: boolean;
 }
 
 export function SectionHeader({
@@ -17,7 +16,6 @@ export function SectionHeader({
   id,
   align = "center",
   className,
-  dark = false,
 }: SectionHeaderProps) {
   return (
     <div
@@ -28,37 +26,24 @@ export function SectionHeader({
       )}
     >
       {eyebrow && (
-        <p
-          className={cn(
-            "mb-3 text-xs font-semibold uppercase tracking-[0.2em]",
-            dark ? "text-brand-gold" : "text-primary"
-          )}
-        >
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-slate-400">
           {eyebrow}
         </p>
       )}
       <h2
         id={id}
-        className={cn(
-          "font-heading text-3xl font-semibold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]",
-          dark ? "text-white" : "text-foreground"
-        )}
+        className="font-heading text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl"
       >
         {title}
       </h2>
       {description && (
-        <p
-          className={cn(
-            "mt-4 text-base leading-relaxed sm:text-lg",
-            dark ? "text-white/70" : "text-muted-foreground"
-          )}
-        >
+        <p className="mt-5 text-base font-medium leading-relaxed text-slate-500 sm:text-lg">
           {description}
         </p>
       )}
       <div
         className={cn(
-          "mt-6 h-1 w-12 rounded-full bg-brand-gold",
+          "mt-8 h-1 w-12 rounded-full bg-slate-200",
           align === "center" && "mx-auto"
         )}
         aria-hidden="true"

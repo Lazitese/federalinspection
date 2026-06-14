@@ -205,6 +205,13 @@
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-text-primary to-text-secondary;
   }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

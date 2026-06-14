@@ -1,81 +1,158 @@
-import { Eye, Info, Target } from "lucide-react";
+"use client";
 
-import { SectionHeader } from "@/components/section-header";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
-const pillars = [
+const TABS = [
   {
-    icon: Info,
-    title: "About",
-    description:
-      "The Prosperity Party Inspection Sector is a dedicated government body responsible for overseeing quality assurance, regulatory compliance, and accountability across public institutions. We serve citizens by ensuring that government services meet the highest standards of excellence and transparency.",
-    accent: "from-primary/10 to-primary/5",
+    id: "purposes",
+    label: "ዓላማዎች",
+    sublabel: "Party Purposes",
+    items: [
+      { letter: "ሀ", text: "ጠንካራ፣ ዲሞክራሲያዊ፣ ቅቡልነት ያለው፣ ዘላቂ ሀገረ-መንግሥትና የፖለቲካ ሥርዓት መገንባት" },
+      { letter: "ለ", text: "ፈጣንና ፍትሐዊ ተጠቃሚነትን የሚያረጋግጥ ሥር-ነቀል የኢኮኖሚ ሥርዓት መገንባት" },
+      { letter: "ሐ", text: "ሁለንተናዊ ብልጽግናን የሚያስገኝ ማኅበራዊ ልማትን ማረጋገጥ" },
+      { letter: "መ", text: "ሀገራዊ ክብርንና ጥቅምን ማዕከል ያደረገ የውጭ ግንኙነት ማካሄድ" },
+    ],
   },
   {
-    icon: Target,
-    title: "Mission",
-    description:
-      "To conduct rigorous, impartial inspections that uphold national standards, protect public interest, and drive continuous improvement in government service delivery through evidence-based evaluation and actionable recommendations.",
-    accent: "from-brand-gold/15 to-brand-gold/5",
+    id: "principles",
+    label: "መርሆዎች",
+    sublabel: "Party Principles",
+    items: [
+      { letter: "ሀ", text: "ሕዝባዊነት" },
+      { letter: "ለ", text: "ዲሞክራሲያዊነት" },
+      { letter: "ሐ", text: "የሕግ የበላይነት" },
+      { letter: "መ", text: "ልማትና ፍትሐዊ ተጠቃሚነት" },
+      { letter: "ሠ", text: "ተግባራዊ ዕውቀት" },
+      { letter: "ረ", text: "ሀገራዊ አንድነትና ህብረ-ብሔራዊነት" },
+    ],
   },
   {
-    icon: Eye,
-    title: "Vision",
-    description:
-      "A transparent, accountable, and high-performing public sector where every institution delivers quality services that earn the trust and confidence of all Ethiopian citizens.",
-    accent: "from-brand-light/10 to-brand-light/5",
+    id: "values",
+    label: "ዕሴቶች",
+    sublabel: "Party Values",
+    items: [
+      { letter: "ሀ", text: "የዜጎችና የሕዝቦች ክብር" },
+      { letter: "ለ", text: "ነፃነት" },
+      { letter: "ሐ", text: "ፍትሕ" },
+      { letter: "መ", text: "ኅብረ-ብሔራዊ ወንድማማችነትና እህትማማችነት" },
+      { letter: "ሠ", text: "ሀገራዊ መግባባት" },
+      { letter: "ረ", text: "ታማኝነትና አገልጋይነት" },
+      { letter: "ሰ", text: "ውጤታማነትና ተወዳዳሪነት" },
+    ],
   },
 ] as const;
 
 export function AboutMissionVisionSection() {
+  const [activeId, setActiveId] = useState<string>(TABS[0].id);
+  const activeTab = TABS.find((t) => t.id === activeId)!;
+
   return (
     <section
       id="about"
-      className="section-padding relative overflow-hidden bg-surface-elevated"
-      aria-labelledby="about-heading"
+      className="relative flex min-h-[100svh] flex-col justify-center overflow-hidden bg-slate-50 py-16"
+      aria-labelledby="ppv-heading"
     >
-      <div
-        className="pointer-events-none absolute -right-32 top-0 size-96 rounded-full bg-primary/5 blur-3xl"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute -left-32 bottom-0 size-96 rounded-full bg-brand-gold/8 blur-3xl"
-        aria-hidden="true"
-      />
+      <div className="container-site flex h-full flex-col gap-10 lg:flex-row lg:items-center lg:gap-20">
 
-      <div className="container-site relative">
-        <SectionHeader
-          id="about-heading"
-          eyebrow="Who We Are"
-          title="About Our Organization"
-          description="Committed to excellence, integrity, and public service across Ethiopia."
-        />
-
-        <div className="mt-14 grid gap-6 lg:grid-cols-3 lg:gap-8">
-          {pillars.map(({ icon: Icon, title, description, accent }, index) => (
-            <article
-              key={title}
-              className="group relative overflow-hidden rounded-2xl border border-border/60 bg-surface-elevated p-8 shadow-[0_1px_3px_rgba(15,53,68,0.06)] transition-all duration-300 hover:border-primary/20 hover:shadow-[0_20px_40px_-12px_rgba(15,53,68,0.1)] lg:p-10"
+        {/* Left: Heading + Tab Switcher */}
+        <div className="flex shrink-0 flex-col gap-8 lg:w-[320px] xl:w-[360px]">
+          <div>
+            <h2
+              id="ppv-heading"
+              className="font-heading text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl xl:text-5xl"
             >
-              <div
-                className={`absolute inset-0 bg-linear-to-br ${accent} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
-                aria-hidden="true"
-              />
-              <div className="relative">
-                <div className="mb-6 flex items-center gap-4">
-                  <span className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-                    <Icon className="size-5" aria-hidden="true" />
+              የፓርቲው{" "}
+              <span style={{ color: "#014BAA" }}>ዓላማዎች፣</span>
+              <br />
+              <span className="text-slate-400">መርሆዎችና ዕሴቶች</span>
+            </h2>
+            <div className="mt-5 h-1 w-12 rounded-full" style={{ backgroundColor: "#FFB800" }} />
+          </div>
+
+          {/* Vertical Tab Buttons */}
+          <div role="tablist" aria-label="Category" className="flex flex-row gap-2 lg:flex-col">
+            {TABS.map((tab, i) => {
+              const isActive = tab.id === activeId;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`panel-${tab.id}`}
+                  onClick={() => setActiveId(tab.id)}
+                  className="group flex items-center gap-4 rounded-2xl px-5 py-4 text-left transition-all duration-300"
+                  style={{
+                    backgroundColor: isActive ? "#014BAA" : "white",
+                    boxShadow: isActive ? "0 8px 20px rgba(1,75,170,0.2)" : "0 1px 4px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <div
+                    className="flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold transition-colors"
+                    style={{
+                      backgroundColor: isActive ? "rgba(255,184,0,0.2)" : "#f1f5f9",
+                      color: isActive ? "#FFB800" : "#64748b",
+                    }}
+                  >
+                    {i + 1}
+                  </div>
+                  <div>
+                    <p
+                      className="text-base font-semibold leading-tight"
+                      style={{ color: isActive ? "white" : "#1e293b" }}
+                    >
+                      {tab.label}
+                    </p>
+                    <p
+                      className="mt-0.5 text-xs font-medium"
+                      style={{ color: isActive ? "rgba(255,255,255,0.6)" : "#94a3b8" }}
+                    >
+                      {tab.sublabel}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right: Items Grid */}
+        <div className="flex-1 lg:min-h-[480px]" id={`panel-${activeTab.id}`} role="tabpanel">
+          <p className="mb-5 text-xs font-bold uppercase tracking-[0.2em] text-slate-300">
+            {activeTab.sublabel} — {activeTab.items.length} items
+          </p>
+          <ul className="grid gap-3 sm:grid-cols-2" role="list">
+            {activeTab.items.map((item, index) => (
+              <li key={item.letter}>
+                <div className="group flex items-start gap-4 rounded-2xl bg-white p-5 ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-6px_rgba(1,75,170,0.10)] hover:ring-[#014BAA]/20">
+                  <span
+                    className="flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold ring-1 transition-all duration-200 group-hover:text-white"
+                    style={{
+                      backgroundColor: "#f8fafc",
+                      color: "#1e293b",
+                      ringColor: "#e2e8f0",
+                    }}
+                    onMouseEnter={(e) => {
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.backgroundColor = "#014BAA";
+                      el.style.color = "white";
+                    }}
+                    onMouseLeave={(e) => {
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.backgroundColor = "#f8fafc";
+                      el.style.color = "#1e293b";
+                    }}
+                  >
+                    {item.letter}
                   </span>
-                  <span className="font-heading text-5xl leading-none text-border/80">
-                    0{index + 1}
-                  </span>
+                  <p className="text-sm font-medium leading-relaxed text-slate-600 transition-colors group-hover:text-slate-800">
+                    {item.text}
+                  </p>
                 </div>
-                <h3 className="font-heading text-2xl text-foreground">{title}</h3>
-                <p className="mt-4 leading-relaxed text-muted-foreground">
-                  {description}
-                </p>
-              </div>
-            </article>
-          ))}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

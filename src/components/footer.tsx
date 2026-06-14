@@ -1,94 +1,92 @@
 import Link from "next/link";
-import {
-  Globe,
-  Link2,
-  Mail,
-  MapPin,
-  Phone,
-  Share2,
-  ShieldCheck,
-} from "lucide-react";
-
+import Image from "next/image";
+import { MapPin, Phone, Mail } from "lucide-react";
 import { navLinks } from "@/lib/site-data";
 
-const socialLinks = [
-  { label: "Official Website", href: "#", icon: Globe },
-  { label: "Share Updates", href: "#", icon: Share2 },
-  { label: "Resources", href: "#", icon: Link2 },
-] as const;
+const submissionLinks = [
+  { label: "ጥቆማ — Complaint", href: "/tikoma" },
+  { label: "አቤቱታ — Grievance", href: "/abetuta" },
+];
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="relative overflow-hidden bg-brand-dark text-white">
+    <footer className="relative border-t border-slate-100 bg-white">
       <div
-        className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-brand-gold via-brand-gold-light to-brand-gold"
-        aria-hidden="true"
-      />
-      <div
-        className="pattern-grid absolute inset-0 opacity-30"
+        className="absolute inset-x-0 top-0 h-1"
+        style={{ backgroundColor: "#FFB800" }}
         aria-hidden="true"
       />
 
-      <div className="container-site relative py-16 sm:py-20">
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
-          <div className="lg:col-span-5">
-            <div className="flex items-center gap-3">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
-                <ShieldCheck className="size-5" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="font-heading text-xl">Prosperity Party</p>
-                <p className="text-sm text-white/60">Inspection Sector</p>
+      <div className="container-site py-14 sm:py-16">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10">
+          {/* Brand */}
+          <div>
+            <Link href="/" className="inline-flex items-center gap-3">
+              <div className="relative size-11 overflow-hidden rounded-full ring-2 ring-[#FFB800]/50">
+                <Image src="/logo.jpg" alt="Federal Inspection Commission Logo" fill className="object-cover" />
               </div>
-            </div>
-            <p className="mt-5 max-w-sm text-sm leading-relaxed text-white/55">
-              Ensuring quality, accountability, and transparency in government
-              services for the benefit of all Ethiopian citizens.
+              <div>
+                <p className="text-sm font-bold text-slate-900">PP Inspection</p>
+                <p className="text-xs text-slate-400">የብልፅግና የኢንስፔክሽንና የሥነ-ምግባር ኮሚሽን</p>
+              </div>
+            </Link>
+            <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-500">
+              Ensuring quality, accountability, and transparency across party institutions.
             </p>
-            <div className="mt-6 flex items-center gap-2">
-              {socialLinks.map(({ label, href, icon: Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="flex size-10 items-center justify-center rounded-xl bg-white/8 text-white/60 ring-1 ring-white/10 transition-all hover:bg-white/15 hover:text-white"
-                >
-                  <Icon className="size-4" aria-hidden="true" />
-                </a>
-              ))}
+            <p className="mt-4 text-sm font-semibold text-slate-800">
+              ጠንካራ ኢንስፔክሽን ለጠንካራ ፖርቲ!
+            </p>
+            <p className="mt-0.5 text-xs text-slate-400">Strong Inspection for a Strong Party</p>
+          </div>
+
+          {/* Links */}
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-1 lg:gap-10">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: "#014BAA" }}>
+                Navigation
+              </h3>
+              <ul className="mt-4 space-y-2.5" role="list">
+                {navLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: "#014BAA" }}>
+                Submissions
+              </h3>
+              <ul className="mt-4 space-y-2.5" role="list">
+                {submissionLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
-          <div className="lg:col-span-3">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-gold-light">
-              Quick Links
+          {/* Contact */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: "#014BAA" }}>
+              Contact
             </h3>
-            <ul className="mt-5 space-y-3" role="list">
-              {navLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-white/60 transition-colors hover:text-white"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="lg:col-span-4">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-gold-light">
-              Contact Us
-            </h3>
-            <ul className="mt-5 space-y-4 text-sm text-white/60" role="list">
-              <li className="flex items-start gap-3">
-                <MapPin
-                  className="mt-0.5 size-4 shrink-0 text-brand-gold-light"
-                  aria-hidden="true"
-                />
+            <ul className="mt-4 space-y-4 text-sm text-slate-600" role="list">
+              <li className="flex items-start gap-2.5">
+                <MapPin className="mt-0.5 size-4 shrink-0" style={{ color: "#FFB800" }} aria-hidden="true" />
                 <span>
                   Kirkos Sub-City, Woreda 08
                   <br />
@@ -98,39 +96,37 @@ export function Footer() {
               <li>
                 <a
                   href="tel:+251111234567"
-                  className="flex items-center gap-3 transition-colors hover:text-white"
+                  className="flex items-center gap-2.5 transition-colors hover:text-slate-900"
                 >
-                  <Phone
-                    className="size-4 shrink-0 text-brand-gold-light"
-                    aria-hidden="true"
-                  />
+                  <Phone className="size-4 shrink-0" style={{ color: "#FFB800" }} aria-hidden="true" />
                   +251 11 123 4567
                 </a>
               </li>
               <li>
                 <a
                   href="mailto:info@pp-inspection.gov.et"
-                  className="flex items-center gap-3 transition-colors hover:text-white"
+                  className="flex items-center gap-2.5 transition-colors hover:text-slate-900"
                 >
-                  <Mail
-                    className="size-4 shrink-0 text-brand-gold-light"
-                    aria-hidden="true"
-                  />
+                  <Mail className="size-4 shrink-0" style={{ color: "#FFB800" }} aria-hidden="true" />
                   info@pp-inspection.gov.et
                 </a>
               </li>
             </ul>
+            <Link
+              href="/contact"
+              className="mt-5 inline-flex text-sm font-semibold transition-colors hover:opacity-80"
+              style={{ color: "#014BAA" }}
+            >
+              View full contact details →
+            </Link>
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
-          <p className="text-sm text-white/45">
-            &copy; {currentYear} Prosperity Party Inspection Sector. All rights
-            reserved.
+        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-slate-100 pt-8 sm:flex-row">
+          <p className="text-sm text-slate-400">
+            &copy; {year} Prosperity Party Inspection &amp; Ethics Commission. All rights reserved.
           </p>
-          <p className="text-xs text-white/35">
-            Federal Democratic Republic of Ethiopia
-          </p>
+          <p className="text-xs text-slate-300">Federal Democratic Republic of Ethiopia</p>
         </div>
       </div>
     </footer>

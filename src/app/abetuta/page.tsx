@@ -1,0 +1,15 @@
+import { SubmissionForm } from "@/components/submission-form";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "አቤቱታ | Federal Inspection Commission",
+  description: "የአቤቱታ ማቅረቢያ ቅጽ",
+};
+
+export default function AbetutaPage() {
+  return (
+    <div className="bg-slate-50 min-h-screen pt-24 pb-12">
+      <SubmissionForm type="abetuta" />
+    </div>
+  );
+}

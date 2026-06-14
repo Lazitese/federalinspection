@@ -1,81 +1,145 @@
-import Image from "next/image";
-import Link from "next/link";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+"use client";
 
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { ArrowRight, FileText } from "lucide-react";
+
+const LINE_1 = "የፌዴራል ብልፅግና";
+const LINE_2 = "የኢንስፔክሽንና የስነ ምግባር ኮሚሽን";
+const FULL_TEXT = LINE_1 + "\n" + LINE_2;
+const TYPING_SPEED = 80; // ms per character
 
 export function HeroSection() {
+  const [charCount, setCharCount] = useState(0);
+  const [showCursor, setShowCursor] = useState(true);
+
+  // Type characters one by one
+  useEffect(() => {
+    if (charCount < FULL_TEXT.length) {
+      const timeout = setTimeout(() => {
+        setCharCount((c) => c + 1);
+      }, TYPING_SPEED);
+      return () => clearTimeout(timeout);
+    }
+  }, [charCount]);
+
+  // Blink cursor after typing is done
+  useEffect(() => {
+    if (charCount >= FULL_TEXT.length) {
+      const interval = setInterval(() => {
+        setShowCursor((v) => !v);
+      }, 530);
+      return () => clearInterval(interval);
+    }
+  }, [charCount]);
+
+  const typed = FULL_TEXT.slice(0, charCount);
+  const line1Typed = typed.slice(0, Math.min(charCount, LINE_1.length));
+  const line2Typed = charCount > LINE_1.length + 1 ? typed.slice(LINE_1.length + 1) : "";
+  const cursorOnLine1 = charCount <= LINE_1.length;
+  const isDone = charCount >= FULL_TEXT.length;
+
   return (
     <section
       id="home"
-      className="relative flex min-h-[100svh] items-center justify-center overflow-hidden"
+      className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-white"
       aria-labelledby="hero-heading"
     >
-      <div className="absolute inset-0 -z-10">
-        <Image
-          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80"
-          alt=""
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div 
+          className="absolute -right-[10%] -top-[20%] h-[80%] w-[60%] rounded-full opacity-[0.04] blur-[100px]" 
+          style={{ backgroundColor: "#014BAA" }} 
         />
-        <div className="gradient-hero absolute inset-0" />
-        <div className="pattern-grid absolute inset-0" aria-hidden="true" />
-        <div
-          className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_40%,rgba(201,162,39,0.1),transparent)]"
-          aria-hidden="true"
+        <div 
+          className="absolute -bottom-[20%] -left-[10%] h-[60%] w-[50%] rounded-full opacity-[0.06] blur-[100px]" 
+          style={{ backgroundColor: "#FFB800" }} 
+        />
+        <div 
+          className="absolute inset-0 opacity-[0.03]" 
+          style={{ 
+            backgroundImage: `linear-gradient(to right, #014BAA 1px, transparent 1px), linear-gradient(to bottom, #014BAA 1px, transparent 1px)`,
+            backgroundSize: '64px 64px' 
+          }} 
         />
       </div>
 
-      <div className="container-site flex w-full flex-col items-center px-4 py-32 text-center sm:py-36">
+      <div className="container-site relative z-10 flex flex-col items-center px-4 py-32 text-center">
+        
         {/* Logo */}
-        <div className="mb-8 flex flex-col items-center">
-          <span className="flex size-20 items-center justify-center rounded-2xl bg-white/12 text-white shadow-[0_8px_32px_rgba(0,0,0,0.2)] ring-1 ring-white/25 backdrop-blur-sm sm:size-24 sm:rounded-3xl">
-            <ShieldCheck className="size-10 sm:size-12" aria-hidden="true" />
-          </span>
-          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.25em] text-brand-gold-light sm:text-sm">
-            Prosperity Party
-          </p>
+        <div className="mb-10 animate-in fade-in zoom-in-95 duration-700">
+          <div className="relative size-28 overflow-hidden rounded-full bg-white shadow-[0_20px_40px_-12px_rgba(0,0,0,0.12)] ring-1 ring-slate-900/5 sm:size-32">
+            <div className="absolute inset-2">
+              <Image
+                src="/logo.jpg"
+                alt="PP Inspection Commission Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Title */}
+        {/* Main Title with Typing Animation — 2 rows */}
         <h1
           id="hero-heading"
-          className="font-heading max-w-4xl text-balance text-4xl leading-[1.1] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
+          className="font-heading flex flex-col gap-1 sm:gap-2 text-[2.25rem] font-extrabold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl lg:text-[3.5rem] xl:text-[4rem]"
         >
-          Inspection Sector
+          <span className="text-slate-900">
+            {line1Typed}
+            {cursorOnLine1 && (
+              <span
+                className="ml-0.5 inline-block h-[0.85em] w-[4px] translate-y-[0.05em] rounded-sm"
+                style={{ backgroundColor: "#FFB800", opacity: isDone && !showCursor ? 0 : 1 }}
+              />
+            )}
+          </span>
+          <span style={{ color: "#014BAA" }}>
+            {line2Typed}
+            {!cursorOnLine1 && (
+              <span
+                className="ml-0.5 inline-block h-[0.85em] w-[4px] translate-y-[0.05em] rounded-sm"
+                style={{ backgroundColor: "#FFB800", opacity: isDone && !showCursor ? 0 : 1 }}
+              />
+            )}
+          </span>
         </h1>
 
         {/* Motto */}
-        <p className="mt-6 max-w-2xl text-balance text-base leading-relaxed text-white/75 sm:text-lg md:text-xl">
-          Ensuring Quality and Accountability in Government Services
-        </p>
+        <div
+          className="mt-8 mb-12 flex flex-col items-center gap-4 transition-opacity duration-700"
+          style={{ opacity: isDone ? 1 : 0.3 }}
+        >
+          <div className="h-1.5 w-16 rounded-full" style={{ backgroundColor: "#FFB800" }} />
+          <p className="text-xl font-bold text-slate-700 sm:text-2xl">
+            ጠንካራ ኢንስፔክሽን ለጠንካራ ፓርቲ!
+          </p>
+        </div>
 
-        <p className="mt-2 text-sm font-medium text-white/50">
-          Federal Democratic Republic of Ethiopia
-        </p>
+        {/* CTA Buttons */}
+        <div
+          className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:items-center transition-opacity duration-700"
+          style={{ opacity: isDone ? 1 : 0.3 }}
+        >
+          <Link
+            href="/tikoma"
+            className="group flex h-14 items-center justify-center gap-3 rounded-2xl px-10 text-base font-bold text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_-6px_rgba(1,75,170,0.5)]"
+            style={{ backgroundColor: "#014BAA" }}
+          >
+            ጥቆማ
+            <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
 
-        {/* Buttons */}
-        <div className="mt-10 flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
-          <Button
-            asChild
-            size="lg"
-            className="h-12 w-full rounded-full bg-brand-gold px-8 text-base font-semibold text-brand-dark shadow-[0_4px_24px_rgba(201,162,39,0.35)] hover:bg-brand-gold-light sm:w-auto"
+          <Link
+            href="/abetuta"
+            className="group flex h-14 items-center justify-center gap-3 rounded-2xl bg-white px-10 text-base font-bold shadow-sm ring-1 ring-slate-200 transition-all duration-300 hover:-translate-y-1 hover:bg-slate-50 hover:shadow-md"
+            style={{ color: "#014BAA" }}
           >
-            <Link href="#news">
-              Tikoma
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="h-12 w-full rounded-full border-white/30 bg-white/10 px-8 text-base font-medium text-white backdrop-blur-sm hover:bg-white/20 hover:text-white sm:w-auto"
-          >
-            <Link href="#about">Abetuta</Link>
-          </Button>
+            <FileText className="size-5 text-slate-400 group-hover:text-[#014BAA] transition-colors" />
+            አቤቱታ
+          </Link>
         </div>
       </div>
     </section>

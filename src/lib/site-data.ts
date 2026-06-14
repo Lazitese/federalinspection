@@ -41,139 +41,146 @@ export interface Responsibility {
 }
 
 export const navLinks: NavLink[] = [
-  { label: "Home", href: "#home" },
-  { label: "Sle-Egna", href: "#about" },
-  { label: "Senedoch", href: "#news" },
-  { label: "Yagegnun", href: "#members" },
+  { label: "Home", href: "/" },
+  { label: "About Us", href: "/about" },
+  { label: "Files", href: "/files" },
+  { label: "Statistics", href: "/statistics" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 export const newsItems: NewsItem[] = [
   {
     id: "1",
-    title: "National Inspection Standards Updated for 2026",
-    date: "June 10, 2026",
+    title: "ብሔራዊ የኢንስፔክሽን መስፈርቶች ለ2026 ተዘምነዋል",
+    date: "ሰኔ 10, 2026",
     description:
-      "New quality assurance guidelines strengthen accountability across federal institutions and regional offices.",
-    image:
-      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80",
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    image: "__placeholder__",
   },
   {
     id: "2",
-    title: "Quarterly Compliance Report Published",
-    date: "June 5, 2026",
+    title: "ሩብ ዓመታዊ የሕግ ማክበር ሪፖርት ታተመ",
+    date: "ሰኔ 5, 2026",
     description:
-      "The Inspection Sector releases its Q2 report highlighting improved compliance rates and key findings.",
-    image:
-      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80",
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+    image: "__placeholder__",
   },
   {
     id: "3",
-    title: "Training Program for Field Inspectors Launched",
-    date: "May 28, 2026",
+    title: "ለሜዳ ኢንስፔክተሮች የሥልጠና ፕሮግራም ተጀመረ",
+    date: "ሜይ 28, 2026",
     description:
-      "A comprehensive training initiative equips inspectors with modern tools and standardized evaluation methods.",
-    image:
-      "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80",
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.",
+    image: "__placeholder__",
+  },
+  {
+    id: "4",
+    title: "ስለ ሥነ-ምግባር አመራር እና ተጠያቂነት የጋራ ፎረም",
+    date: "ሜይ 15, 2026",
+    description:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Excepteur sint occaecat cupidatat non proident sunt in culpa.",
+    image: "__placeholder__",
+  },
+  {
+    id: "5",
+    title: "የክልል ጽ/ቤት አፈጻጸም ኦዲቶች ተጠናቀቁ",
+    date: "ሜይ 08, 2026",
+    description:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit.",
+    image: "__placeholder__",
   },
 ];
 
 export const memberCategories: MemberCategory[] = [
   {
-    id: "leadership",
-    label: "Leadership",
+    id: "secretariat",
+    label: "ኮሚሽን ጽ/ቤት",
     members: [
       {
-        id: "l1",
-        name: "Dr. Abebe Kebede",
-        position: "Commission Director",
-        email: "abebe.kebede@pp-inspection.gov.et",
-        phone: "+251 11 123 4567",
-        image:
-          "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80",
+        id: "sec-1",
+        name: "ዋና ኮሚሽነር",
+        position: "ዋና ኮሚሽነር (Chief Commissioner)",
+        email: "",
+        phone: "",
+        image: "__placeholder__",
       },
       {
-        id: "l2",
-        name: "H.E. Tigist Haile",
-        position: "Deputy Director",
-        email: "tigist.haile@pp-inspection.gov.et",
-        phone: "+251 11 123 4568",
-        image:
-          "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80",
+        id: "sec-2",
+        name: "ምክትል ኮሚሽነር",
+        position: "ምክትል ኮሚሽነር (Deputy Commissioner)",
+        email: "",
+        phone: "",
+        image: "__placeholder__",
       },
       {
-        id: "l3",
-        name: "Eng. Solomon Tadesse",
-        position: "Chief of Operations",
-        email: "solomon.tadesse@pp-inspection.gov.et",
-        phone: "+251 11 123 4569",
-        image:
-          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80",
+        id: "sec-3",
+        name: "ጸሃፊና ጽህፈት ቤት ሃላፊ",
+        position: "ጸሃፊና ጽህፈት ቤት ሃላፊ (Secretary & Office Head)",
+        email: "",
+        phone: "",
+        image: "__placeholder__",
+      },
+      {
+        id: "sec-4",
+        name: "ኮሚቴ አባል",
+        position: "ኮሚሽን ኮሚቴ አባላት (Committee Member)",
+        email: "",
+        phone: "",
+        image: "__placeholder__",
+      },
+      {
+        id: "sec-5",
+        name: "ስራ አመራር አባል",
+        position: "ስራ አመራር ኮሚቴ አባላት (Executive Member)",
+        email: "",
+        phone: "",
+        image: "__placeholder__",
+      },
+      {
+        id: "sec-6",
+        name: "ማኔጅመንት አባል",
+        position: "ኮሚሽን ማኔጅመንት አባላት (Management Member)",
+        email: "",
+        phone: "",
+        image: "__placeholder__",
       },
     ],
   },
   {
-    id: "inspectors",
-    label: "Inspectors",
+    id: "branch",
+    label: "ኮሚሽን ቅርንጫፍ ጽ/ቤት",
     members: [
       {
-        id: "i1",
-        name: "Mulugeta Assefa",
-        position: "Senior Field Inspector",
-        email: "mulugeta.assefa@pp-inspection.gov.et",
-        phone: "+251 11 123 4570",
-        image:
-          "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80",
+        id: "br-1",
+        name: "ዋና ኮሚሽነር",
+        position: "ዋና ኮሚሽነር (Branch Chief Commissioner)",
+        email: "",
+        phone: "",
+        image: "__placeholder__",
       },
       {
-        id: "i2",
-        name: "Selamawit Bekele",
-        position: "Compliance Inspector",
-        email: "selamawit.bekele@pp-inspection.gov.et",
-        phone: "+251 11 123 4571",
-        image:
-          "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80",
+        id: "br-2",
+        name: "ምክትል ኮሚሽነር",
+        position: "ምክትል ኮሚሽነር (Branch Deputy Commissioner)",
+        email: "",
+        phone: "",
+        image: "__placeholder__",
       },
       {
-        id: "i3",
-        name: "Yonas Mekonnen",
-        position: "Regional Inspector",
-        email: "yonas.mekonnen@pp-inspection.gov.et",
-        phone: "+251 11 123 4572",
-        image:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
-      },
-    ],
-  },
-  {
-    id: "support",
-    label: "Support Staff",
-    members: [
-      {
-        id: "s1",
-        name: "Hanna Girma",
-        position: "Administrative Coordinator",
-        email: "hanna.girma@pp-inspection.gov.et",
-        phone: "+251 11 123 4573",
-        image:
-          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
+        id: "br-3",
+        name: "ጸሃፊ",
+        position: "ጸሃፊና ጽህፈት ቤት ሃላፊ (Branch Secretary)",
+        email: "",
+        phone: "",
+        image: "__placeholder__",
       },
       {
-        id: "s2",
-        name: "Daniel Worku",
-        position: "Data Analyst",
-        email: "daniel.worku@pp-inspection.gov.et",
-        phone: "+251 11 123 4574",
-        image:
-          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
-      },
-      {
-        id: "s3",
-        name: "Meron Tesfaye",
-        position: "Public Relations Officer",
-        email: "meron.tesfaye@pp-inspection.gov.et",
-        phone: "+251 11 123 4575",
-        image:
-          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80",
+        id: "br-4",
+        name: "ኮሚቴ አባል",
+        position: "ኮሚሽን ኮሚቴ አባላት (Branch Committee Member)",
+        email: "",
+        phone: "",
+        image: "__placeholder__",
       },
     ],
   },
