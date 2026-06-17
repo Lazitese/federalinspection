@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { adminSchema } from "@/lib/validations";
-import { adminService } from "@/services/admins";
+import { provisionAdmin } from "@/app/actions/admin-provisioning";
 import { useRouter } from "next/navigation";
 import * as z from "zod";
 import { PERMISSION_GROUPS, ALL_MODULES, Admin } from "@/types";
@@ -22,15 +22,6 @@ const ACCESS_OPTIONS = [
     color: 'text-success',
     border: 'border-success/30',
     bg: 'bg-success/5',
-  },
-  {
-    value: 'group' as const,
-    label: 'የቡድን መዳረሻ',
-    desc: 'ተዛማጅ የሆኑ የተሟሉ የስራ ዘርፎችን ማግኘት ይችላል።',
-    icon: IconShieldHalf,
-    color: 'text-brand-blue',
-    border: 'border-brand-blue/30',
-    bg: 'bg-brand-blue/5',
   },
   {
     value: 'specific' as const,
@@ -83,7 +74,14 @@ export default function CreateAdminPage() {
     try {
       if (data.accessLevel === 'all') { data.groups = []; data.modules = []; }
       else if (data.accessLevel === 'group') { data.modules = []; }
-      await adminService.createAdmin(data as unknown as Admin);
+      
+      const res = await provisionAdmin(data);
+      if (!res.success) {
+        console.error(res.error);
+        alert(res.error);
+        return;
+      }
+      
       router.push('/dashboard/admins');
     } catch (error) {
       console.error(error);
@@ -144,7 +142,7 @@ export default function CreateAdminPage() {
             <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ሚና እና መዳረሻ</h3>
             <p className="text-xs text-text-muted -mt-4">ይህ አስተዳዳሪ ምን ማግኘት እንደሚችል ይምረጡ።</p>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {ACCESS_OPTIONS.map(opt => {
                 const Icon = opt.icon;
                 const isSelected = accessLevel === opt.value;
@@ -168,36 +166,6 @@ export default function CreateAdminPage() {
               })}
             </div>
           </div>
-
-          {accessLevel === 'group' && (
-            <>
-              <div className="w-full h-[1px] bg-border/20" />
-              <div className="flex flex-col gap-4">
-                <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ቡድኖችን ይምረጡ</h4>
-                <p className="text-xs text-text-muted -mt-2">እያንዳንዱ ቡድን ውስጥ ያሉትን ሁሉንም ሞጁሎች ያካትታል።</p>
-                <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(PERMISSION_GROUPS).map(([id, group]) => {
-                    const isSelected = selectedGroups.includes(id);
-                    return (
-                      <button key={id} type="button" onClick={() => toggleGroup(id)} className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${isSelected ? 'bg-brand-blue/5 border-brand-blue/30' : 'bg-surface-primary border-border/30 hover:border-border/60'}`}>
-                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? 'bg-brand-blue border-brand-blue' : 'border-border/50'}`}>
-                          {isSelected && (
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M20 6L9 17l-5-5" />
-                            </svg>
-                          )}
-                        </div>
-                        <div>
-                          <div className={`text-sm font-semibold ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>{group.labelAm}</div>
-                          <div className="text-[10px] text-text-muted mt-0.5">{group.modules.map(m => ALL_MODULES.find(mod => mod.id === m)?.labelAm).join(', ')}</div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
 
           {accessLevel === 'specific' && (
             <>
@@ -231,7 +199,6 @@ export default function CreateAdminPage() {
             <IconShieldCheck size={18} className="text-text-muted shrink-0" />
             <div className="text-xs text-text-muted">
               {accessLevel === 'all' && 'ይህ አስተዳዳሪ ሁሉንም ሞጁሎች ሙሉ በሙሉ ማግኘት ይችላል።'}
-              {accessLevel === 'group' && (<>የተመረጡ ቡድኖች፦ {selectedGroups.length > 0 ? selectedGroups.map(g => PERMISSION_GROUPS[g as keyof typeof PERMISSION_GROUPS]?.labelAm).join(', ') : 'እስካሁን አልተመረጡም።'}</>)}
               {accessLevel === 'specific' && (<>የተመረጡ ሞጁሎች፦ {selectedModules.length > 0 ? selectedModules.map(m => ALL_MODULES.find(mod => mod.id === m)?.labelAm).join(', ') : 'እስካሁን አልተመረጡም።'}</>)}
             </div>
           </div>

@@ -1,11 +1,3 @@
-// @BACKEND: This provider connects to the NestJS WebSocket gateway.
-// Expected contract:
-//   - Socket.IO server at NEXT_PUBLIC_SOCKET_URL (default http://localhost:3001)
-//   - Events the frontend listens for:
-//       'new_complaint': { id: string; title: string; ... }
-//   - Events the frontend emits (if any): TBD
-//   - When the backend gateway is ready, this should work out of the box.
-
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -25,7 +17,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // @BACKEND: Confirm the Socket.IO path and event names match the NestJS gateway
+    // Connect to the NestJS backend WebSocket gateway
     const socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001', {
       path: '/socket.io',
       autoConnect: true,
@@ -41,9 +33,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setIsConnected(false);
     });
 
-    // @BACKEND: Define the payload shape for 'new_complaint' once the gateway is implemented
+    // Example real-time listener: new complaint
     socketInstance.on('new_complaint', (data) => {
       console.log('New complaint received:', data);
+      // Here you could integrate with a toast notification system like sonner or react-hot-toast
     });
 
     setSocket(socketInstance);

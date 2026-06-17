@@ -1,20 +1,17 @@
 'use client';
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { IconUserPlus, IconSearch, IconEdit, IconTrash, IconBuilding } from "@tabler/icons-react";
+import { IconUserPlus, IconSearch, IconFilter, IconBuilding, IconEdit, IconTrash } from "@tabler/icons-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { personnelService } from "@/services/personnel";
 import { Personnel } from "@/types";
-
-// @BACKEND: This page lists personnel from the mock service.
-// Displayed as a photo card grid grouped by office category.
-// Positions follow COMMISSION_POSITIONS hierarchy.
 
 export default function PersonnelPage() {
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
 
   useEffect(() => {
     personnelService.getPersonnel().then(data => {
@@ -23,112 +20,105 @@ export default function PersonnelPage() {
     });
   }, []);
 
-  const deletePersonnel = async (id: string) => {
-    if (confirm('እርግጠኛ ነዎት ይህን ሰራተኛ ማስወገድ ይፈልጋሉ?')) {
-      await personnelService.deletePersonnel(id);
-      setPersonnel(prev => prev.filter(p => p.id !== id));
-    }
-  };
-
-  const filterFn = (p: Personnel) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return p.name.toLowerCase().includes(q) || (p.nameAm || '').includes(q) || p.positionAm.toLowerCase().includes(q);
-  };
-
-  const mainOffice = personnel.filter(p => p.officeCategory === 'Main Office' && filterFn(p));
-  const branchOffice = personnel.filter(p => p.officeCategory === 'Branch Office' && filterFn(p));
-
-  const renderCard = (member: Personnel) => (
-    <div key={member.id} className="group bg-surface-primary border border-border/30 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-brand-blue/20 hover:-translate-y-0.5">
-      {/* Photo */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-secondary">
-        {member.photo ? (
-          <img src={member.photo} alt={member.nameAm || member.name} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
-        ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-b from-surface-secondary to-surface-tertiary">
-            <div className="flex size-16 items-center justify-center rounded-full bg-surface-primary/60">
-              <span className="text-2xl font-bold text-text-muted">
-                {member.nameAm?.charAt(0) || member.name.charAt(0)}
-              </span>
-            </div>
-            <span className="mt-2 text-xs text-text-muted">{member.nameAm || member.name}</span>
+  const columns: ColumnDef<Personnel>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-surface-secondary to-surface-primary border border-border/50 flex items-center justify-center font-bold text-text-primary text-sm shadow-sm transition-transform group-hover:scale-105">
+            {row.original.name.charAt(0)}{row.original.name.split(' ')[1]?.charAt(0)}
           </div>
-        )}
-        {/* Status badge */}
-        <span className={`absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm ${member.status === 'Active' ? 'bg-success/90 text-white' : 'bg-warning/90 text-white'}`}>
-          {member.status === 'Active' ? 'ንቁ' : 'እንቅስቃሴ የለም'}
-        </span>
-      </div>
-      {/* Info */}
-      <div className="p-4">
-        <h3 className="text-sm font-semibold text-text-primary line-clamp-1">{member.nameAm || member.name}</h3>
-        <p className="text-[11px] text-text-muted mt-0.5">{member.positionAm}</p>
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-[10px] font-medium text-text-secondary flex items-center gap-1">
-            <IconBuilding size={12} />
-            {member.officeCategoryAm}
-          </span>
-          <div className="flex items-center gap-1">
-            <Link href={`/dashboard/personnel/${member.id}`} className="p-1.5 text-text-muted hover:text-brand-blue hover:bg-brand-blue/10 rounded-md transition-colors">
-              <IconEdit size={14} />
-            </Link>
-            <button onClick={() => deletePersonnel(member.id)} className="p-1.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-md transition-colors">
-              <IconTrash size={14} />
-            </button>
-          </div>
+          <span className="text-sm font-medium text-text-primary group-hover:text-brand-blue transition-colors">{row.original.name}</span>
         </div>
-      </div>
-    </div>
-  );
+      ),
+    },
+    {
+      accessorKey: "position",
+      header: "Official Title & Role",
+      cell: ({ row }) => (
+        <div>
+          <div className="text-sm font-medium text-text-secondary">{row.original.position}</div>
+          <div className="text-[11px] text-text-muted mt-0.5">{row.original.department}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      cell: ({ row }) => <span className="text-xs text-text-muted">{row.original.email}</span>,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${row.original.status === 'Active' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+          {row.original.status}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-2">
+          <Link href={`/dashboard/personnel/${row.original.id}`} className="p-1.5 text-text-muted hover:text-brand-blue hover:bg-brand-blue/10 rounded-md transition-colors border border-border/30">
+            <IconEdit size={16} />
+          </Link>
+          <button className="p-1.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-md transition-colors border border-border/30">
+            <IconTrash size={16} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const mainOffice = personnel.filter(p => p.officeCategory === 'Main Office');
+  const branchOffices = personnel.filter(p => p.officeCategory !== 'Main Office');
 
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-8 h-full">
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-3xl font-light text-text-primary tracking-tight">ሰራተኞች</h1>
-            <p className="text-sm text-text-muted mt-1">የኮሚሽኑን አመራሮች እና ሰራተኞች ያስተዳድሩ።</p>
+            <h1 className="text-3xl font-light text-text-primary tracking-tight">Personnel Directory</h1>
+            <p className="text-sm text-text-muted mt-1">Manage leadership and staff records across all branches.</p>
           </div>
           <div className="flex gap-4">
             <div className="relative">
               <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="ሰራተኛ ይፈልጉ..." className="bg-surface-primary/50 border border-border/30 rounded-full pl-10 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 w-64 transition-colors" />
+              <input type="text" placeholder="Search staff..." className="bg-surface-primary/50 border border-border/30 rounded-full pl-10 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 w-64 transition-colors" />
             </div>
+            <button className="flex items-center justify-center p-2.5 rounded-full border border-border/30 text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors">
+              <IconFilter size={18} />
+            </button>
             <Link href="/dashboard/personnel/create" className="flex items-center gap-2 bg-brand-blue hover:bg-brand-blue/90 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm">
               <IconUserPlus size={18} />
-              አዲስ ሰራተኛ
+              Add Staff
             </Link>
           </div>
         </div>
-
+        
         {loading ? (
-          <div className="flex items-center justify-center h-48 text-text-muted">በመጫን ላይ...</div>
+          <div className="flex items-center justify-center h-48">Loading...</div>
         ) : (
-          <div className="flex flex-col gap-10 pb-10">
-            {/* ኮሚሽን ጽ/ቤት */}
+          <div className="flex flex-col gap-8 pb-10">
+            {/* Main Office Group */}
             <div>
               <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-4 flex items-center gap-2">
                 <IconBuilding size={16} />
-                ኮሚሽን ጽ/ቤት
+                ኮሚሽን ጽ/ቤት (Main Office)
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {mainOffice.length === 0 ? (
-                  <p className="col-span-full text-sm text-text-muted py-8 text-center">ምንም ሰራተኞች አልተገኙም</p>
-                ) : mainOffice.map(renderCard)}
-              </div>
+              <DataTable columns={columns} data={mainOffice} />
             </div>
-            {/* ኮሚሽን ቅርንጫፍ ጽ/ቤት */}
+
+            {/* Branch Offices Group */}
             <div>
               <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-4 flex items-center gap-2">
                 <IconBuilding size={16} />
-                ኮሚሽን ቅርንጫፍ ጽ/ቤት
+                የኮሚሽን ቅርንጫፍ ጽ/ቤቶች (Branch Offices)
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {branchOffice.length === 0 ? (
-                  <p className="col-span-full text-sm text-text-muted py-8 text-center">ምንም ሰራተኞች አልተገኙም</p>
-                ) : branchOffice.map(renderCard)}
-              </div>
+              <DataTable columns={columns} data={branchOffices} />
             </div>
           </div>
         )}

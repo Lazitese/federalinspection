@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { usePathname } from "next/navigation";
-import { MessageSquarePlus, X } from "lucide-react";
+import { MessageSquarePlus, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { submitFeedback } from "@/app/actions/feedback";
 
 const RATINGS = [
   { id: "excellent", label: "በጣም ጥሩ" },
-  { id: "very-good", label: "ጣም ጥሩ" },
   { id: "good", label: "ጥሩ" },
   { id: "bad", label: "መጥፎ" },
   { id: "very-bad", label: "በጣም መጥፎ" },
@@ -21,6 +21,7 @@ export function CommissionReviewPopup() {
   const [rating, setRating] = useState<RatingId | null>(null);
   const [review, setReview] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   if (pathname.startsWith("/dashboard")) {
     return null;
@@ -38,7 +39,15 @@ export function CommissionReviewPopup() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!review.trim() || !rating) return;
-    setSubmitted(true);
+    
+    startTransition(async () => {
+      try {
+        await submitFeedback(rating, review);
+        setSubmitted(true);
+      } catch (error) {
+        console.error("Feedback submission error:", error);
+      }
+    });
   }
 
   function handleReset() {
@@ -105,7 +114,7 @@ export function CommissionReviewPopup() {
                   onClick={() => setRating(option.id)}
                   className={cn(
                     "rounded-lg border px-3 py-2 text-left text-xs font-semibold transition-colors",
-                    option.id === "excellent" || option.id === "very-good" || option.id === "good"
+                    option.id === "excellent" || option.id === "good"
                       ? "border-slate-200 text-slate-700 hover:border-[#014BAA]/30 hover:bg-[#014BAA]/5 hover:text-[#014BAA]"
                       : "border-slate-200 text-slate-700 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
                   )}
@@ -141,11 +150,12 @@ export function CommissionReviewPopup() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                disabled={!review.trim()}
-                className="flex-1 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={!review.trim() || isPending}
+                className="flex-1 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-1.5"
                 style={{ backgroundColor: "#014BAA" }}
               >
-                አስገባ
+                {isPending && <Loader2 className="size-3 animate-spin" />}
+                {isPending ? "እያስገባ ነው..." : "አስገባ"}
               </button>
               <button
                 type="button"

@@ -1,13 +1,5 @@
-// @BACKEND: API contract for documents:
-//   GET    /documents          → Document[]
-//   GET    /documents/:id      → Document
-//   POST   /documents/upload   → Document (multipart/form-data via FormData)
-// All endpoints prefix with BASE_URL (default http://localhost:3001/api)
-
-import { apiClient } from '../lib/api-client';
-import { Document, OFFICES } from '../types';
-
-export { OFFICES };
+import { supabase } from '@/lib/supabaseClient';
+import { Document, DocumentFile } from '../types';
 
 export const MAIN_CATEGORIES = [
   { code: '000', name: 'መተዳደሪያ ደንብ' },
@@ -105,131 +97,113 @@ export const SUB_CATEGORIES: Record<string, { code: string; name: string }[]> = 
   ],
 };
 
-const mockDocs: Document[] = [
-  {
-    id: '1', title: 'የ2017 የስራ ሂደት መመሪያ', description: 'አዲሱ የ2017 የስራ ሂደት መመሪያ',
-    office: 'main', mainCategory: '000', subCategory: '030', year: '2017',
-    files: [
-      { id: 'f1', name: 'መመሪያ_ሰነድ.pdf', fileType: 'PDF', fileSize: '2.4 MB' },
-      { id: 'f2', name: 'አባሪ_ሰነድ.docx', fileType: 'DOCX', fileSize: '1.1 MB' },
-    ],
-    uploadDate: 'ጥቅምት 14, 2026', uploadedBy: 'አስተዳዳሪ',
-  },
-  {
-    id: '2', title: 'የዲሲፕሊን መመሪያ እና አተገባበር', description: 'የዲሲፕሊን መመሪያ አተገባበር ላይ የተሻሻለ ሰነድ',
-    office: 'main', mainCategory: '100', subCategory: '110', year: '2026',
-    files: [
-      { id: 'f3', name: 'ዲሲፕሊን_መመሪያ.pdf', fileType: 'PDF', fileSize: '1.8 MB' },
-    ],
-    uploadDate: 'ጥቅምት 12, 2026', uploadedBy: 'ፋይናንስ ክፍል',
-  },
-  {
-    id: '3', title: 'የአደረጃጀትና አሰራር መመሪያ ቁጥር 1/2014', description: 'የኮሚሽኑ የአደረጃጀትና አሰራር መመሪያ',
-    office: 'main', mainCategory: '200', subCategory: '210', year: '2014',
-    files: [
-      { id: 'f4', name: 'መመሪያ_ቁጥር_1_2014.pdf', fileType: 'PDF', fileSize: '3.2 MB' },
-      { id: 'f5', name: 'የማሻሻያ_ሀሳብ.docx', fileType: 'DOCX', fileSize: '856 KB' },
-      { id: 'f6', name: 'የውሳኔ_ሰነድ.xlsx', fileType: 'XLSX', fileSize: '412 KB' },
-    ],
-    uploadDate: 'ጥቅምት 10, 2026', uploadedBy: 'ሄለን ተስፋዬ',
-  },
-  {
-    id: '4', title: 'የ2016 በጀት ዓመት ዕቅድ', description: 'የ2016 በጀት ዓመት ዕቅድ ሰነድ',
-    office: 'branch', mainCategory: '300', subCategory: '310', year: '2016',
-    files: [
-      { id: 'f7', name: 'ዕቅድ_2016.pdf', fileType: 'PDF', fileSize: '5.1 MB' },
-      { id: 'f8', name: 'የበጀት_ዝርዝር.xlsx', fileType: 'XLSX', fileSize: '2.3 MB' },
-    ],
-    uploadDate: 'ጥቅምት 8, 2026', uploadedBy: 'አበበ በቀለ',
-  },
-  {
-    id: '5', title: 'የሩብ ዓመት ሪፖርት Q3 2026', description: 'የሶስተኛ ሩብ ዓመት የአፈጻጸም ሪፖርት',
-    office: 'branch', mainCategory: '400', subCategory: '410', year: '2026',
-    files: [
-      { id: 'f9', name: 'Q3_ሪፖርት.pdf', fileType: 'PDF', fileSize: '4.2 MB' },
-    ],
-    uploadDate: 'ጥቅምት 5, 2026', uploadedBy: 'ማርታ ደሳለኝ',
-  },
-  {
-    id: '6', title: 'የሱፐርቪዥን ቼክ ሊስት 2026', description: 'የሱፐርቪዥን ተቆጣጣሪ ቼክ ሊስት',
-    office: 'branch', mainCategory: '500', subCategory: '510', year: '2026',
-    files: [
-      { id: 'f10', name: 'ቼክ_ሊስት.xlsx', fileType: 'XLSX', fileSize: '1.2 MB' },
-      { id: 'f11', name: 'መመሪያ.pdf', fileType: 'PDF', fileSize: '678 KB' },
-    ],
-    uploadDate: 'መስከረም 28, 2026', uploadedBy: 'ውጭ ኦዲተር',
-  },
-  {
-    id: '7', title: 'ለፓርቲ መዋቅር የኢንስፔክሽን ግብረ-መልስ', description: 'የኢንስፔክሽን ግኝቶች እና ምክረ-ሃሳቦች',
-    office: 'main', mainCategory: '600', subCategory: '610', year: '2026',
-    files: [
-      { id: 'f12', name: 'ግብረ_መልስ.pdf', fileType: 'PDF', fileSize: '3.6 MB' },
-    ],
-    uploadDate: 'መስከረም 25, 2026', uploadedBy: 'አስተዳዳሪ',
-  },
-  {
-    id: '8', title: 'የአቅም ግንባታ ስልጠና ሰነድ', description: 'የአቅም ግንባታ ስልጠና ቁሳቁሶች',
-    office: 'branch', mainCategory: '700', subCategory: '710', year: '2026',
-    files: [
-      { id: 'f13', name: 'ስልጠና_ሰነድ.pdf', fileType: 'PDF', fileSize: '8.6 MB' },
-      { id: 'f14', name: 'የአቀራረብ.pptx', fileType: 'DOCX', fileSize: '4.5 MB' },
-      { id: 'f15', name: 'ተሳታፊ_ዝርዝር.xlsx', fileType: 'XLSX', fileSize: '234 KB' },
-    ],
-    uploadDate: 'መስከረም 20, 2026', uploadedBy: 'ዳንኤል መኮንን',
-  },
-  {
-    id: '9', title: 'የኮሚሽን ቃለ-ጉባዔ መዝገብ ሰኔ 2026', description: 'የኮሚሽን መደበኛ ቃለ-ጉባዔ የውሳኔ ሰነድ',
-    office: 'main', mainCategory: '800', subCategory: '810', year: '2026',
-    files: [
-      { id: 'f16', name: 'ቃለ_ጉባዔ_መዝገብ.pdf', fileType: 'PDF', fileSize: '1.5 MB' },
-      { id: 'f17', name: 'የውሳኔ_ማስታወሻ.docx', fileType: 'DOCX', fileSize: '892 KB' },
-    ],
-    uploadDate: 'መስከረም 15, 2026', uploadedBy: 'ሄለን ተስፋዬ',
-  },
-  {
-    id: '10', title: 'ቅጽ የስልጠና እርካታ ቅጽ', description: 'የስልጠና እርካታ ቅጽ አብነት',
-    office: 'main', mainCategory: '900', subCategory: '930', year: '2026',
-    files: [
-      { id: 'f18', name: 'እርካታ_ቅጽ.pdf', fileType: 'PDF', fileSize: '456 KB' },
-    ],
-    uploadDate: 'መስከረም 10, 2026', uploadedBy: 'ማርታ ደሳለኝ',
-  },
-  {
-    id: '11', title: 'የፓርቲ ሀብቶች አያያዝ መመሪያ', description: 'የፓርቲ ሀብቶች አያያዝ እና አስተዳደር መመሪያ',
-    office: 'branch', mainCategory: '100', subCategory: '180', year: '2025',
-    files: [
-      { id: 'f19', name: 'ሀብቶች_መመሪያ.pdf', fileType: 'PDF', fileSize: '2.1 MB' },
-    ],
-    uploadDate: 'ነሐሴ 20, 2026', uploadedBy: 'አበበ በቀለ',
-  },
-  {
-    id: '12', title: 'የ2017 በጀት ዓመት ዕቅድ ረቂቅ', description: 'የ2017 በጀት ዓመት ዕቅድ ረቂቅ ሰነድ',
-    office: 'main', mainCategory: '300', subCategory: '320', year: '2017',
-    files: [
-      { id: 'f20', name: 'ዕቅድ_ረቂቅ_2017.pdf', fileType: 'PDF', fileSize: '3.8 MB' },
-      { id: 'f21', name: 'የበጀት_ዝርዝር_2017.xlsx', fileType: 'XLSX', fileSize: '1.6 MB' },
-      { id: 'f22', name: 'ማጠቃለያ.docx', fileType: 'DOCX', fileSize: '945 KB' },
-    ],
-    uploadDate: 'ነሐሴ 15, 2026', uploadedBy: 'ዳንኤል መኮንን',
-  },
-];
-
 export const documentService = {
-  // @BACKEND: Replace mock return with real API call — response matches Document[]
   getDocuments: async (): Promise<Document[]> => {
-    await apiClient.get('/documents');
-    return mockDocs;
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching documents:', error);
+      return [];
+    }
+    
+    return data.map((d: any) => ({
+      id: d.id,
+      title: d.title,
+      description: d.description || '',
+      office: d.office,
+      mainCategory: d.main_category,
+      subCategory: d.sub_category,
+      year: d.year,
+      uploadedBy: d.uploaded_by,
+      uploadDate: d.upload_date,
+      files: d.files || []
+    })) as Document[];
   },
-  // @BACKEND: Replace mock return with real API call — response matches Document
+
   getDocumentById: async (id: string): Promise<Document | undefined> => {
-    await apiClient.get(`/documents/${id}`);
-    return mockDocs.find(d => d.id === id);
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('id', id)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching document:', error);
+      return undefined;
+    }
+    
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description || '',
+      office: data.office,
+      mainCategory: data.main_category,
+      subCategory: data.sub_category,
+      year: data.year,
+      uploadedBy: data.uploaded_by,
+      uploadDate: data.upload_date,
+      files: data.files || []
+    } as Document;
   },
-  // @BACKEND: Replace mock — real call should send FormData, return created Document
-  uploadDocument: async (data: FormData): Promise<Document> => {
-    await apiClient.post('/documents/upload', data);
-    const newDoc = { id: Date.now().toString(), title: 'አዲስ ሰነድ', mainCategory: '000', subCategory: '010', year: '2026', files: [], uploadDate: 'ዛሬ', uploadedBy: 'አስተዳዳሪ' } as Document;
-    mockDocs.push(newDoc);
-    return newDoc;
+
+  uploadDocument: async (docData: {
+    title: string;
+    description: string;
+    office: string;
+    mainCategory: string;
+    subCategory: string;
+    year: string;
+  }, file: File): Promise<Document> => {
+    
+    const fileExt = file.name.split('.').pop() || '';
+    const fileName = `${Date.now()}_${Math.random()}.${fileExt}`;
+    const storagePath = `${docData.office}/${docData.year}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(storagePath, file);
+      
+    if (uploadError) throw uploadError;
+
+    const documentFile: DocumentFile = {
+      id: fileName,
+      fileType: fileExt.toUpperCase(),
+      name: file.name,
+      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`
+    };
+
+    const { data, error } = await supabase
+      .from('documents')
+      .insert([{
+        title: docData.title || file.name,
+        description: docData.description || '',
+        office: docData.office,
+        main_category: docData.mainCategory,
+        sub_category: docData.subCategory,
+        year: docData.year,
+        uploaded_by: 'Current Admin', // This should be fetched from context normally
+        upload_date: new Date().toLocaleDateString('am-ET', { month: 'short', day: 'numeric', year: 'numeric' }),
+        files: [documentFile]
+      }])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description || '',
+      office: data.office,
+      mainCategory: data.main_category,
+      subCategory: data.sub_category,
+      year: data.year,
+      uploadedBy: data.uploaded_by,
+      uploadDate: data.upload_date,
+      files: data.files || []
+    } as Document;
   }
 };

@@ -2,7 +2,8 @@
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { IconSearch, IconUpload, IconDownload, IconX, IconFile, IconFileText, IconTable, IconCsv, IconFolder, IconChevronLeft, IconCalendar, IconUser, IconBuilding, IconBuildingEstate } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { documentService, MAIN_CATEGORIES, SUB_CATEGORIES } from "@/services/documents";
 import { Document, OFFICES } from "@/types";
 
@@ -25,14 +26,28 @@ export default function DocumentsPage() {
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadModal, setUploadModal] = useState(false);
+  
+  // Upload State
+  const [uploadOffice, setUploadOffice] = useState<string>('main');
   const [uploadMainCat, setUploadMainCat] = useState('000');
+  const [uploadSubCat, setUploadSubCat] = useState('010');
+  const [uploadYear, setUploadYear] = useState('2026');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
+  const [showQRForFile, setShowQRForFile] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchDocuments = () => {
     documentService.getDocuments().then(data => {
       setDocuments(data);
       setLoading(false);
     });
+  };
+
+  useEffect(() => {
+    fetchDocuments();
   }, []);
 
   const filtered = documents.filter(d => {
@@ -66,6 +81,42 @@ export default function DocumentsPage() {
     if (viewLevel === 'main') { setSelectedOffice(null); setViewLevel('office'); }
     else if (viewLevel === 'sub') { setSelectedMain(null); setViewLevel('main'); }
     else if (viewLevel === 'docs') { setSelectedSub(null); setViewLevel('sub'); }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFiles(Array.from(e.target.files));
+    }
+  };
+
+  const handleUpload = async () => {
+    if (selectedFiles.length === 0) return alert('እባክዎ ፋይል ይምረጡ');
+    
+    setIsUploading(true);
+    try {
+      const docData = {
+        title: selectedFiles[0].name,
+        description: '',
+        office: uploadOffice,
+        mainCategory: uploadMainCat,
+        subCategory: uploadSubCat,
+        year: uploadYear,
+      };
+
+      for (const file of selectedFiles) {
+        await documentService.uploadDocument(docData, file);
+      }
+      
+      setUploadModal(false);
+      setSelectedFiles([]);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      fetchDocuments();
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('ፋይል መጫን አልተሳካም።');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const getPageTitle = () => {
@@ -320,39 +371,56 @@ export default function DocumentsPage() {
             <div className="px-8 pb-8 flex flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <label className="text-[11px] font-semibold text-text-secondary uppercase tracking-widest">ቢሮ</label>
-                <select className="w-full bg-surface-primary border border-border/50 rounded-xl p-3.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
+                <select value={uploadOffice} onChange={(e) => setUploadOffice(e.target.value)} className="w-full bg-surface-primary border border-border/50 rounded-xl p-3.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
                   {OFFICES.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[11px] font-semibold text-text-secondary uppercase tracking-widest">ዋና ምድብ</label>
-                <select value={uploadMainCat} onChange={(e) => setUploadMainCat(e.target.value)} className="w-full bg-surface-primary border border-border/50 rounded-xl p-3.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
+                <select value={uploadMainCat} onChange={(e) => { setUploadMainCat(e.target.value); setUploadSubCat((SUB_CATEGORIES[e.target.value] || [])[0]?.code || ''); }} className="w-full bg-surface-primary border border-border/50 rounded-xl p-3.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
                   {MAIN_CATEGORIES.map(cat => <option key={cat.code} value={cat.code}>{cat.code} - {cat.name}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[11px] font-semibold text-text-secondary uppercase tracking-widest">ንኡስ ምድብ</label>
-                <select className="w-full bg-surface-primary border border-border/50 rounded-xl p-3.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
+                <select value={uploadSubCat} onChange={(e) => setUploadSubCat(e.target.value)} className="w-full bg-surface-primary border border-border/50 rounded-xl p-3.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
                   {(SUB_CATEGORIES[uploadMainCat] || []).map(sub => <option key={sub.code} value={sub.code}>{sub.code} - {sub.name}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[11px] font-semibold text-text-secondary uppercase tracking-widest">ዓመት</label>
-                <select className="w-full bg-surface-primary border border-border/50 rounded-xl p-3.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
+                <select value={uploadYear} onChange={(e) => setUploadYear(e.target.value)} className="w-full bg-surface-primary border border-border/50 rounded-xl p-3.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
                   {['2026','2025','2024','2023','2022','2021','2020','2019','2018','2017','2016','2015','2014','2013','2012'].map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[11px] font-semibold text-text-secondary uppercase tracking-widest">ፋይሎች (በርካታ መምረጥ ይቻላል)</label>
-                <div className="w-full rounded-2xl border-2 border-dashed border-border/50 bg-surface-primary/50 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-surface-secondary/50 hover:border-brand-blue/30 transition-all group p-8">
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full rounded-2xl border-2 border-dashed border-border/50 bg-surface-primary/50 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-surface-secondary/50 hover:border-brand-blue/30 transition-all group p-8"
+                >
                   <div className="w-12 h-12 rounded-full bg-surface-secondary flex items-center justify-center group-hover:bg-brand-blue/10 transition-colors"><IconUpload size={22} stroke={1.5} className="text-text-muted group-hover:text-brand-blue transition-colors" /></div>
                   <span className="text-sm text-text-muted font-medium group-hover:text-brand-blue transition-colors">ፋይሎችን ለመምረጥ ጠቅ ያድርጉ</span>
                   <span className="text-[10px] text-text-muted">PDF, DOCX, XLSX, CSV እስከ 20MB በአንድ ፋይል</span>
                 </div>
+                <input type="file" multiple hidden ref={fileInputRef} onChange={handleFileChange} />
+                {selectedFiles.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1">
+                    {selectedFiles.map((f, i) => (
+                      <div key={i} className="text-xs text-brand-blue flex items-center gap-2">
+                        <IconFileText size={14} />
+                        {f.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setUploadModal(false)} className="flex-1 py-3 px-4 bg-surface-secondary hover:bg-surface-secondary/80 text-text-primary rounded-xl text-sm font-medium transition-colors border border-border/50">ሰርዝ</button>
-                <button onClick={() => setUploadModal(false)} className="flex-1 py-3 px-4 bg-brand-blue hover:bg-brand-blue/90 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"><IconUpload size={16} className="inline mr-1.5" />ጫን</button>
+                <button onClick={handleUpload} disabled={isUploading} className="flex-1 py-3 px-4 bg-brand-blue hover:bg-brand-blue/90 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm">
+                  <IconUpload size={16} className="inline mr-1.5" />
+                  {isUploading ? 'በመጫን ላይ...' : 'ጫን'}
+                </button>
               </div>
             </div>
           </div>
@@ -400,19 +468,37 @@ export default function DocumentsPage() {
                   {previewDoc.files.map((file) => {
                     const meta = fileTypeMeta[file.fileType] || defaultFileIcon;
                     return (
-                      <div key={file.id} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-primary/50 border border-border/20 hover:border-brand-blue/30 transition-all">
-                        <div className={`w-10 h-10 rounded-xl ${meta.bg} flex items-center justify-center shrink-0`}><span className={meta.color}>{meta.icon}</span></div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-text-primary truncate">{file.name}</div>
-                          <div className="text-xs text-text-muted">{file.fileType} • {file.fileSize}</div>
+                      <div key={file.id} className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-primary/50 border border-border/20 hover:border-brand-blue/30 transition-all">
+                          <div className={`w-10 h-10 rounded-xl ${meta.bg} flex items-center justify-center shrink-0`}><span className={meta.color}>{meta.icon}</span></div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-text-primary truncate">{file.name}</div>
+                            <div className="text-xs text-text-muted">{file.fileType} • {file.fileSize}</div>
+                          </div>
+                          <button 
+                            onClick={() => setShowQRForFile(showQRForFile === file.name ? null : file.name)}
+                            className="flex items-center gap-2 px-3 py-2 bg-surface-secondary hover:bg-border/50 text-text-primary rounded-xl text-xs font-semibold transition-colors shrink-0"
+                          >
+                            QR ኮድ
+                          </button>
+                          <button className="flex items-center gap-2 px-3 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white rounded-xl text-xs font-semibold transition-colors shrink-0"><IconDownload size={14} />አውርድ</button>
                         </div>
-                        <button className="flex items-center gap-2 px-3 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white rounded-xl text-xs font-semibold transition-colors shrink-0"><IconDownload size={14} />አውርድ</button>
+                        {showQRForFile === file.name && (
+                          <div className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-border/30">
+                            <QRCodeSVG 
+                              value={`${typeof window !== 'undefined' ? window.location.origin : ''}/request-access?targetType=file&target=${encodeURIComponent(file.name)}`} 
+                              size={160} 
+                              fgColor="#1a1a2e" 
+                            />
+                            <span className="text-[10px] text-text-muted mt-2">መዳረሻ ለመጠየቅ ይህንን ኮድ ይቃኙ</span>
+                          </div>
+                        )}
                       </div>
                     );
-                  })}
-                </div>
+                })}
               </div>
-              <button onClick={() => setPreviewDoc(null)} className="w-full py-3 px-4 bg-surface-secondary hover:bg-surface-secondary/80 text-text-primary rounded-xl text-sm font-medium transition-colors border border-border/50">ዝጋ</button>
+            </div>
+            <button onClick={() => { setPreviewDoc(null); setShowQRForFile(null); }} className="w-full py-3 px-4 bg-surface-secondary hover:bg-surface-secondary/80 text-text-primary rounded-xl text-sm font-medium transition-colors border border-border/50">ዝጋ</button>
             </div>
           </div>
         </div>

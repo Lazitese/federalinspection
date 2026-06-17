@@ -1,45 +1,78 @@
 import React from 'react';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
-const activities = [
-  { 
-    id: '#8942', 
-    date: '12/04/2026 16:22', 
-    user: 'አበበ ብ.',
-    type: 'ህትመት', 
-    module: 'ዜና', 
-    target: 'የሚዲያ መግለጫ',
-    message: 'ስለ ዓመታዊው የኮሚሽን ስብሰባ የሚዲያ መግለጫ በዋናው መድረክ ታትሟል።' 
-  },
-  { 
-    id: '#8941', 
-    date: '11/04/2026 14:05', 
-    user: 'ስርዓት',
-    type: 'ማስገባ', 
-    module: 'ሰነዶች', 
-    target: 'Q3_Report.pdf',
-    message: 'Q3_Report.pdf ሰነድ ከማዕከላዊ ቤተ-መጽሐፍት ተመሳስሏል። መጠኑ 4.2MB ነው።' 
-  },
-  { 
-    id: '#8940', 
-    date: '11/04/2026 10:15', 
-    user: 'ቻላ ድ.',
-    type: 'ማጽደቅ', 
-    module: 'QR ጥያቄ', 
-    target: 'መዳረሻ መለያ፡ 4912',
-    message: 'ለቻላ ድ. የእንግዳ መዳረሻ ጥያቄ ለህንጻ አ፣ 3ኛ ፎቅ ጸድቷል።' 
-  },
-  { 
-    id: '#8939', 
-    date: '10/04/2026 09:30', 
-    user: 'ያልታወቀ',
-    type: 'ማስገባ', 
-    module: 'ጥቆማ', 
-    target: 'ቲኬት #492',
-    message: 'ስለ 2ኛ ፎቅ ሽንት ቤት ጥገና የሚመለከት መጻሕፍት ተቀብሏል።' 
-  },
-];
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleString('am-ET', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
-export const RecentActivity = () => {
+export const RecentActivity = async () => {
+  // Fetch latest documents
+  const { data: latestDocs } = await supabaseAdmin
+    .from('documents')
+    .select('id, title, created_at, uploaded_by')
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  // Fetch latest news
+  const { data: latestNews } = await supabaseAdmin
+    .from('news_articles')
+    .select('id, title, created, author')
+    .order('created', { ascending: false })
+    .limit(3);
+
+  // Fetch latest complaints
+  const { data: latestComplaints } = await supabaseAdmin
+    .from('complaints')
+    .select('id, subject, created_at, name')
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  // Combine and sort
+  const combinedActivities = [
+    ...(latestDocs || []).map(doc => ({
+      id: `#DOC-${doc.id.substring(0, 4)}`,
+      rawDate: new Date(doc.created_at).getTime(),
+      date: formatDate(doc.created_at),
+      user: doc.uploaded_by || 'ስርዓት',
+      type: 'ማስገባ',
+      module: 'ሰነዶች',
+      target: doc.title,
+      message: `${doc.title} ሰነድ ወደ ሲስተሙ ገብቷል።`
+    })),
+    ...(latestNews || []).map(news => ({
+      id: `#NWS-${news.id.substring(0, 4)}`,
+      rawDate: new Date(news.created || new Date()).getTime(),
+      date: formatDate(news.created || new Date().toISOString()),
+      user: news.author || 'አስተዳዳሪ',
+      type: 'ህትመት',
+      module: 'ዜና',
+      target: news.title,
+      message: `${news.title} በሚዲያ መድረክ ታትሟል።`
+    })),
+    ...(latestComplaints || []).map(comp => ({
+      id: `#CMP-${comp.id.substring(0, 4)}`,
+      rawDate: new Date(comp.created_at).getTime(),
+      date: formatDate(comp.created_at),
+      user: comp.name || 'ያልታወቀ',
+      type: 'ማስገባ',
+      module: 'ጥቆማ',
+      target: comp.subject,
+      message: `አዲስ ጥቆማ: ${comp.subject} ተቀብሏል።`
+    }))
+  ];
+
+  // Sort by date descending and take top 4
+  const activities = combinedActivities
+    .sort((a, b) => b.rawDate - a.rawDate)
+    .slice(0, 4);
+
   return (
     <div className="bg-surface-primary/30 rounded-[2rem] border border-border/20 overflow-hidden backdrop-blur-md mb-8">
       <div className="p-8 pb-6 flex justify-between items-end">
@@ -60,7 +93,7 @@ export const RecentActivity = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-border/10">
-            {activities.map((activity) => (
+            {activities.length > 0 ? activities.map((activity) => (
               <tr key={activity.id} className="hover:bg-surface-secondary/20 transition-colors group cursor-default">
                 <td className="py-5 px-4 pl-6 align-top w-40">
                   <div className="text-sm font-medium text-text-primary group-hover:text-brand-blue transition-colors">{activity.id}</div>
@@ -79,7 +112,11 @@ export const RecentActivity = () => {
                   </div>
                 </td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td colSpan={4} className="py-8 text-center text-text-muted">ምንም እንቅስቃሴ የለም</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

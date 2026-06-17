@@ -1,110 +1,75 @@
-// @BACKEND: API contract for admins:
-//   GET    /admins          → Admin[]
-//   GET    /admins/:id      → Admin
-//   POST   /admins          → Admin (JSON body with Omit<Admin, 'id' | 'createdAt' | 'lastLogin'>)
-//   PUT    /admins/:id      → Admin (JSON body with Partial<Admin>)
-//   DELETE /admins/:id      → void
-// All endpoints prefix with BASE_URL (default http://localhost:3001/api)
-
-// @BACKEND: The permission model is defined in types/index.ts (PERMISSION_GROUPS, ALL_MODULES).
-// Backend should store group IDs and module IDs as string arrays, not the full objects.
-
-import { apiClient } from '../lib/api-client';
-import { Admin } from '../types';
-
-// @BACKEND: Remove mock data — this is placeholder until the NestJS API is ready
-const mockAdmins: Admin[] = [
-  {
-    id: '1',
-    name: 'Dr. Tadesse W.',
-    email: 'tadesse@commission.gov',
-    phone: '+251-911-123-456',
-    accessLevel: 'all',
-    groups: [],
-    modules: [],
-    status: 'Active',
-    lastLogin: 'ጥቅምት 15, 2026 08:30 AM',
-    createdAt: 'መስከረም 1, 2025',
-  },
-  {
-    id: '2',
-    name: 'W/ro Helene T.',
-    email: 'helene@commission.gov',
-    phone: '+251-922-234-567',
-    accessLevel: 'group',
-    groups: ['content', 'communications'],
-    modules: [],
-    status: 'Active',
-    lastLogin: 'ጥቅምት 14, 2026 02:15 PM',
-    createdAt: 'ጥር 10, 2026',
-  },
-  {
-    id: '3',
-    name: 'Ato Daniel M.',
-    email: 'daniel@commission.gov',
-    phone: '+251-933-345-678',
-    accessLevel: 'specific',
-    groups: [],
-    modules: ['news', 'documents'],
-    status: 'Active',
-    lastLogin: 'ጥቅምት 13, 2026 11:00 AM',
-    createdAt: 'ሚያዝያ 20, 2026',
-  },
-  {
-    id: '4',
-    name: 'W/ro Almaz G.',
-    email: 'almaz@commission.gov',
-    phone: '+251-944-456-789',
-    accessLevel: 'specific',
-    groups: [],
-    modules: ['complaints'],
-    status: 'Inactive',
-    lastLogin: 'መስከረም 30, 2026 09:45 AM',
-    createdAt: 'ነሐሴ 5, 2025',
-  },
-];
+import { supabase } from '../lib/supabaseClient';
+import { Admin, AccessLevel } from '../types';
 
 export const adminService = {
-  // @BACKEND: Replace mock return with real API call — response matches Admin[]
   getAdmins: async (): Promise<Admin[]> => {
-    await apiClient.get('/admins');
-    return mockAdmins;
+    const { data, error } = await supabase.from('admin_profiles').select('*');
+    if (error) {
+      console.error('Error fetching admins:', error);
+      return [];
+    }
+
+    return data.map((profile: any) => ({
+      id: profile.id,
+      name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+      email: profile.email || '',
+      phone: profile.phone || '',
+      accessLevel: (profile.access_level || 'specific') as AccessLevel,
+      groups: profile.groups || [],
+      modules: profile.modules || [],
+      status: profile.status || 'Active',
+      lastLogin: profile.last_login ? new Date(profile.last_login).toLocaleDateString() : '-',
+      createdAt: new Date(profile.created_at).toLocaleDateString(),
+    }));
   },
 
-  // @BACKEND: Replace mock return with real API call — response matches Admin
   getAdminById: async (id: string): Promise<Admin | undefined> => {
-    await apiClient.get(`/admins/${id}`);
-    return mockAdmins.find(a => a.id === id);
-  },
+    const { data, error } = await supabase.from('admin_profiles').select('*').eq('id', id).single();
+    if (error || !data) {
+      console.error('Error fetching admin:', error);
+      return undefined;
+    }
 
-  // @BACKEND: Replace mock — real API should persist and return created Admin
-  createAdmin: async (data: Omit<Admin, 'id' | 'createdAt' | 'lastLogin'>): Promise<Admin> => {
-    await apiClient.post('/admins', data);
-    const newAdmin: Admin = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: 'ዛሬ',
-      lastLogin: '-',
+    return {
+      id: data.id,
+      name: `${data.first_name || ''} ${data.last_name || ''}`.trim(),
+      email: data.email || '',
+      phone: data.phone || '',
+      accessLevel: (data.access_level || 'specific') as AccessLevel,
+      groups: data.groups || [],
+      modules: data.modules || [],
+      status: data.status || 'Active',
+      lastLogin: data.last_login ? new Date(data.last_login).toLocaleDateString() : '-',
+      createdAt: new Date(data.created_at).toLocaleDateString(),
     };
-    mockAdmins.push(newAdmin);
-    return newAdmin;
   },
 
-  // @BACKEND: Replace mock — real API should persist changes and return updated Admin
-  updateAdmin: async (id: string, data: Partial<Admin>): Promise<void> => {
-    await apiClient.put(`/admins/${id}`, data);
-    const index = mockAdmins.findIndex(a => a.id === id);
-    if (index !== -1) {
-      mockAdmins[index] = { ...mockAdmins[index], ...data };
+  updateAdmin: async (id: string, updateData: Partial<Admin>): Promise<void> => {
+    const payload: any = {};
+    if (updateData.name) {
+      const parts = updateData.name.split(' ');
+      payload.first_name = parts[0];
+      payload.last_name = parts.slice(1).join(' ');
+    }
+    if (updateData.email) payload.email = updateData.email;
+    if (updateData.phone) payload.phone = updateData.phone;
+    if (updateData.accessLevel) payload.access_level = updateData.accessLevel;
+    if (updateData.groups) payload.groups = updateData.groups;
+    if (updateData.modules) payload.modules = updateData.modules;
+    if (updateData.status) payload.status = updateData.status;
+
+    const { error } = await supabase.from('admin_profiles').update(payload).eq('id', id);
+    if (error) {
+      console.error('Error updating admin:', error);
+      throw error;
     }
   },
 
-  // @BACKEND: Replace mock — real API should delete from database
   deleteAdmin: async (id: string): Promise<void> => {
-    await apiClient.delete(`/admins/${id}`);
-    const index = mockAdmins.findIndex(a => a.id === id);
-    if (index !== -1) {
-      mockAdmins.splice(index, 1);
+    const { error } = await supabase.from('admin_profiles').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting admin:', error);
+      throw error;
     }
   },
 };

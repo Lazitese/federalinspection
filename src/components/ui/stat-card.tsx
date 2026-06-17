@@ -1,7 +1,7 @@
 import React from 'react';
 import { TablerIconsProps, IconTrendingUp, IconTrendingDown, IconDiscountCheckFilled } from '@tabler/icons-react';
 
-export type AccentColor = 'yellow' | 'green' | 'purple' | 'red' | 'blue' | 'brand';
+export type AccentColor = 'yellow' | 'green' | 'purple' | 'red' | 'blue';
 
 interface StatCardProps {
   label: string;
@@ -19,8 +19,7 @@ const colorMap = {
   green: 'var(--accent-card-green)',
   purple: 'var(--accent-card-purple)',
   red: 'var(--accent-card-red)',
-  blue: 'var(--brand-blue)',
-  brand: 'var(--brand-blue)'
+  blue: 'var(--brand-blue)'
 };
 
 export const StatCard = ({ 

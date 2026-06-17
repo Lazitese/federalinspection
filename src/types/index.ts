@@ -32,7 +32,7 @@ export const ALL_MODULES = [
   { id: 'settings', label: 'Settings', labelAm: 'ቅንብሮች' },
 ] as const;
 
-export type AccessLevel = 'all' | 'group' | 'specific';
+export type AccessLevel = 'all' | 'specific';
 
 export interface Admin {
   id: string;
@@ -147,4 +147,24 @@ export interface Complaint {
   date: string;
   status: 'New' | 'Under Review' | 'Resolved' | 'Rejected';
   resolution?: ComplaintResolution;
+}
+
+export interface QrCode {
+  id: string;
+  active: boolean;
+  duration: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface ScanRequest {
+  id: string;
+  requesterDevice: string;
+  fileName: string;
+  ipAddress?: string;
+  status: 'Pending' | 'Approved' | 'Denied';
+  approverName?: string;
+  durationGranted?: string;
+  createdAt: string;
+  resolvedAt?: string;
 }

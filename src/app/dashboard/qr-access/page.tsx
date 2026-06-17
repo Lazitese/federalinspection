@@ -2,8 +2,10 @@
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { IconCheck, IconX, IconDeviceMobile, IconFileText, IconKey, IconCopy, IconRefresh, IconFolder, IconFiles } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MAIN_CATEGORIES, SUB_CATEGORIES } from "@/services/documents";
+import { QRCodeSVG } from 'qrcode.react';
+import { supabase } from "@/lib/supabaseClient";
 
 type AccessType = 'file' | 'main' | 'sub';
 
@@ -27,15 +29,83 @@ export default function QRAccessPage() {
   const [selectedMain, setSelectedMain] = useState(MAIN_CATEGORIES[0].code);
   const [selectedSub, setSelectedSub] = useState(SUB_CATEGORIES[MAIN_CATEGORIES[0].code]?.[0]?.code || '');
   const [generatedCode, setGeneratedCode] = useState('847291');
+  
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
 
-  const pendingRequests = [
-    { id: 1, code: '847291', device: 'iPhone 13', target: 'ሰነድ: የ2017 የስራ ሂደት መመሪያ', time: 'ከ10 ደቂቃ በፊት' },
-    { id: 2, code: '516304', device: 'Chrome/Windows', target: 'ዋና ምድብ: 200 - የኮሚሽን መመሪያዎች', time: 'ከ1 ሰዓት በፊት' },
-    { id: 3, code: '932758', device: 'Samsung S24', target: 'ንኡስ ምድብ: 710 - የአቅም ግንባታ ስልጠና ሰነድ', time: 'ከ3 ሰዓታት በፊት' },
-  ];
+  useEffect(() => {
+    // Fetch initial pending requests
+    const fetchRequests = async () => {
+      const { data, error } = await supabase
+        .from('scan_requests')
+        .select('*')
+        .eq('status', 'Pending')
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        setPendingRequests(data);
+      }
+    };
+
+    fetchRequests();
+
+    // Subscribe to new requests
+    const subscription = supabase
+      .channel('public:scan_requests')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'scan_requests' }, (payload) => {
+        if (payload.eventType === 'INSERT' && payload.new.status === 'Pending') {
+          setPendingRequests(prev => [payload.new, ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+          if (payload.new.status !== 'Pending') {
+            setPendingRequests(prev => prev.filter(req => req.id !== payload.new.id));
+          } else {
+            setPendingRequests(prev => prev.map(req => req.id === payload.new.id ? payload.new : req));
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    const { error } = await supabase
+      .from('scan_requests')
+      .update({ status: 'Approved', resolved_at: new Date().toISOString() })
+      .eq('id', id);
+    if (!error) {
+      setPendingRequests(prev => prev.filter(req => req.id !== id));
+    }
+  };
+
+  const handleDeny = async (id: string) => {
+    const { error } = await supabase
+      .from('scan_requests')
+      .update({ status: 'Denied', resolved_at: new Date().toISOString() })
+      .eq('id', id);
+    if (!error) {
+      setPendingRequests(prev => prev.filter(req => req.id !== id));
+    }
+  };
 
   const currentSubs = SUB_CATEGORIES[selectedMain] || [];
   const AccessIcon = accessTypes.find(t => t.value === accessType)?.icon || IconFileText;
+
+  let targetName = '';
+  if (accessType === 'file') targetName = selectedDoc;
+  if (accessType === 'main') targetName = `${selectedMain} - ${MAIN_CATEGORIES.find(c => c.code === selectedMain)?.name}`;
+  if (accessType === 'sub') targetName = `${selectedMain}.${selectedSub} - ${currentSubs.find(s => s.code === selectedSub)?.name}`;
+
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const qrUrl = `${baseUrl}/request-access?targetType=${accessType}&target=${encodeURIComponent(targetName)}`;
+
+  // Use the ID or a short hash for display code if needed, but for now we'll just keep the random 6 digit code
+  // as the access PIN for the admin.
+  
+  const generateNewQR = () => {
+    setGeneratedCode(Math.floor(100000 + Math.random() * 900000).toString());
+  };
 
   return (
     <DashboardLayout>
@@ -54,23 +124,15 @@ export default function QRAccessPage() {
           <div className="lg:col-span-2 flex flex-col gap-4">
             <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">QR ኮድ ማመንጫ</h2>
             <div className="bg-surface-primary/30 rounded-2xl border border-border/20 p-6 backdrop-blur-md flex flex-col items-center gap-5">
-              {/* QR Visual */}
-              <div className="w-40 h-40 rounded-2xl bg-white border border-border/30 flex items-center justify-center p-4 shadow-sm">
-                <div className="w-full h-full grid grid-cols-8 grid-rows-8 gap-[2px]">
-                  {Array.from({ length: 64 }).map((_, i) => (
-                    <div key={i} className={`rounded-[2px] ${
-                      [0,1,2,5,6,7,8,15,16,23,24,31,32,39,40,47,48,55,56,57,58,61,62,63,
-                       14,9,10,17,22,25,30,33,38,41,46,49,54,53,
-                       3,4,11,12,13,19,20,21,26,27,28,29,34,35,36,37,42,43,44,45,50,51,52,59,60].includes(i)
-                        ? 'bg-[#1a1a2e]' : 'bg-transparent'
-                    }`} />
-                  ))}
-                </div>
+              
+              {/* Real QR Visual */}
+              <div className="w-48 h-48 rounded-2xl bg-white border border-border/30 flex items-center justify-center p-4 shadow-sm">
+                <QRCodeSVG value={qrUrl} size={160} fgColor="#1a1a2e" />
               </div>
 
               {/* Access Code */}
               <div className="w-full bg-surface-primary/50 border border-border/20 rounded-xl p-4">
-                <div className="text-[10px] text-text-muted uppercase tracking-wider text-center mb-2">የመዳረሻ ኮድ</div>
+                <div className="text-[10px] text-text-muted uppercase tracking-wider text-center mb-2">የመዳረሻ ኮድ / ፒን</div>
                 <div className="flex items-center justify-center gap-2">
                   <span className="font-mono text-2xl font-bold tracking-[0.3em] text-text-primary">{generatedCode}</span>
                   <button className="p-2 text-text-muted hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-colors" title="ቅዳ">
@@ -153,14 +215,12 @@ export default function QRAccessPage() {
               <div className="w-full bg-surface-primary/50 border border-border/20 rounded-xl px-4 py-3 flex items-center gap-3">
                 <AccessIcon size={16} className="text-brand-blue shrink-0" />
                 <span className="text-xs text-text-primary font-medium truncate">
-                  {accessType === 'file' && selectedDoc}
-                  {accessType === 'main' && `${selectedMain} - ${MAIN_CATEGORIES.find(c => c.code === selectedMain)?.name}`}
-                  {accessType === 'sub' && `${selectedMain}.${selectedSub} - ${currentSubs.find(s => s.code === selectedSub)?.name}`}
+                  {targetName}
                 </span>
               </div>
 
               <button
-                onClick={() => setGeneratedCode(Math.floor(100000 + Math.random() * 900000).toString())}
+                onClick={generateNewQR}
                 className="w-full flex items-center justify-center gap-2 bg-brand-blue hover:bg-brand-blue/90 text-white py-3 rounded-xl text-sm font-bold transition-colors shadow-sm"
               >
                 <IconRefresh size={16} />
@@ -179,48 +239,56 @@ export default function QRAccessPage() {
             </div>
 
             <div className="flex flex-col gap-3">
-              {pendingRequests.map((req) => (
-                <div key={req.id} className="bg-surface-primary/30 border border-border/20 rounded-2xl backdrop-blur-sm overflow-hidden group hover:bg-surface-primary/50 hover:border-warning/30 transition-all">
-                  <div className="p-4 sm:p-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
-                          <IconDeviceMobile size={20} className="text-warning" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-text-primary truncate">{req.device}</span>
-                            <span className="text-[10px] text-text-muted shrink-0">• {req.time}</span>
+              {pendingRequests.map((req) => {
+                // Determine icon based on target Type (optional logic here, using generic file for now)
+                return (
+                  <div key={req.id} className="bg-surface-primary/30 border border-border/20 rounded-2xl backdrop-blur-sm overflow-hidden group hover:bg-surface-primary/50 hover:border-warning/30 transition-all">
+                    <div className="p-4 sm:p-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
+                            <IconDeviceMobile size={20} className="text-warning" />
                           </div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <IconFileText size={11} className="text-text-muted shrink-0" />
-                            <span className="text-xs text-brand-blue font-medium truncate">{req.target}</span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-text-primary truncate">{req.requester_device || 'Unknown Device'}</span>
+                              <span className="text-[10px] text-text-muted shrink-0">• {new Date(req.created_at).toLocaleTimeString('am-ET', { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <IconFileText size={11} className="text-text-muted shrink-0" />
+                              <span className="text-xs text-brand-blue font-medium truncate">{req.file_name}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-2 bg-surface-primary/60 border border-border/20 rounded-xl px-4 py-2 shrink-0">
-                        <IconKey size={14} className="text-brand-blue" />
-                        <span className="font-mono font-bold text-text-primary tracking-wider">{req.code}</span>
-                      </div>
+                        {req.ip_address && (
+                          <div className="hidden lg:flex items-center gap-2 bg-surface-primary/60 border border-border/20 rounded-xl px-4 py-2 shrink-0">
+                            <IconKey size={14} className="text-brand-blue" />
+                            <span className="font-mono text-xs font-bold text-text-primary tracking-wider">{req.ip_address}</span>
+                          </div>
+                        )}
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button className="flex items-center gap-1.5 bg-success/10 hover:bg-success/20 text-success px-4 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-105">
-                          <IconCheck size={14} stroke={3} />
-                          ፍቀድ
-                        </button>
-                        <button className="flex items-center gap-1.5 bg-danger/10 hover:bg-danger/20 text-danger px-4 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-105">
-                          <IconX size={14} stroke={3} />
-                          ከልክል
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button onClick={() => handleApprove(req.id)} className="flex items-center gap-1.5 bg-success/10 hover:bg-success/20 text-success px-4 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-105">
+                            <IconCheck size={14} stroke={3} />
+                            ፍቀድ
+                          </button>
+                          <button onClick={() => handleDeny(req.id)} className="flex items-center gap-1.5 bg-danger/10 hover:bg-danger/20 text-danger px-4 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-105">
+                            <IconX size={14} stroke={3} />
+                            ከልክል
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {pendingRequests.length === 0 && (
-                <div className="flex items-center justify-center h-32 text-sm text-text-muted">ምንም ጥያቄ የለም</div>
+                <div className="flex flex-col items-center justify-center h-48 gap-3 border-2 border-dashed border-border/40 rounded-2xl bg-surface-primary/10">
+                  <IconFileText size={32} className="text-text-muted/40" />
+                  <div className="text-sm text-text-muted font-medium">ምንም አዲስ ጥያቄ የለም</div>
+                </div>
               )}
             </div>
           </div>
