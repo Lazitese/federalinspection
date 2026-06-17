@@ -59,6 +59,7 @@ const translations: Record<Language, Record<string, string>> = {
     toggleTheme: 'ገጽታ ቀይር',
     assessment: 'ምዘና',
     feedback: 'አስተያየት መቀበያ',
+    admins: 'አስተዳዳሪዎች',
   },
   en: {
     dashboard: 'Dashboard',
@@ -108,6 +109,7 @@ const translations: Record<Language, Record<string, string>> = {
     toggleTheme: 'Toggle Theme',
     assessment: 'Assessment',
     feedback: 'Feedback Inbox',
+    admins: 'Admins',
   },
 };
 

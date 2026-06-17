@@ -1,11 +1,21 @@
 import * as z from 'zod';
 
+export const adminSchema = z.object({
+  name: z.string().min(3, 'Name is required.'),
+  email: z.string().email('Invalid email address.'),
+  phone: z.string().min(9, 'Phone number is too short.'),
+  accessLevel: z.enum(['all', 'group', 'specific']),
+  groups: z.array(z.string()).optional().default([]),
+  modules: z.array(z.string()).optional().default([]),
+  status: z.enum(['Active', 'Inactive']).optional().default('Active'),
+});
+
 export const newsSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters.'),
-  language: z.string().min(1, 'Language is required.'),
-  category: z.string().min(1, 'Category is required.'),
-  body: z.string().min(10, 'Body content is required.'),
+  title: z.string().min(5, 'ርዕስ ቢያንስ 5 ፊደላት መሆን አለበት።'),
+  language: z.string().min(1, 'ቋንቋ ያስፈልጋል።'),
+  body: z.string().min(10, 'ይዘት ያስፈልጋል።'),
   status: z.enum(['Draft', 'Published']).optional(),
+  videoUrl: z.string().optional(),
 });
 
 export const documentSchema = z.object({

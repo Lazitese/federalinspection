@@ -19,13 +19,17 @@ export default function DashboardPage() {
           <span className="text-brand-yellow drop-shadow-md">☕</span> <Greeting />, አስተዳዳሪ
         </h1>
         <p className="text-text-secondary text-sm">የዛሬው የስርዓት አጠቃላይ እይታ።</p>
+        <div className="flex items-center gap-2 mt-3">
+          <div className="h-1 w-8 bg-brand-blue rounded-full"></div>
+          <div className="h-1 w-4 bg-brand-yellow rounded-full"></div>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard 
           label="የሰነዶች ቤተ-መጽሐፍት" 
           value="1,482" 
-          accentColor="yellow" 
+          accentColor="brand" 
           icon={IconFileText} 
           substats={[
             { label: 'ተጨመረ', value: '42' },
@@ -36,7 +40,7 @@ export default function DashboardPage() {
         <StatCard 
           label="ዜና እና ሚዲያ" 
           value="124" 
-          accentColor="green" 
+          accentColor="yellow" 
           icon={IconNews} 
           substats={[
             { label: 'ታተመ', value: '118' },
@@ -47,7 +51,7 @@ export default function DashboardPage() {
         <StatCard 
           label="የዜጎች ጥቆማዎች" 
           value="48" 
-          accentColor="purple" 
+          accentColor="green" 
           icon={IconMessage2} 
           substats={[
             { label: 'አዲስ', value: '12' },
@@ -58,7 +62,7 @@ export default function DashboardPage() {
         <StatCard 
           label="የተመዘገቡ ሰራተኞች" 
           value="342" 
-          accentColor="red" 
+          accentColor="purple" 
           icon={IconUsers} 
           substats={[
             { label: 'ንቁ', value: '310' },
@@ -72,7 +76,7 @@ export default function DashboardPage() {
         <div className="xl:col-span-2 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-warning animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-brand-yellow animate-pulse"></span>
               በመጠባበቅ ላይ ያሉ QR ጥያቄዎች
             </h2>
             <Link href="/dashboard/qr-access" className="text-[10px] font-bold uppercase tracking-widest text-brand-blue hover:underline">
@@ -82,7 +86,7 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-3">
             {qrRequests.map(req => (
               <div key={req.id} className="bg-surface-primary/30 border border-border/20 rounded-2xl p-4 backdrop-blur-sm hover:bg-surface-primary/50 transition-colors relative overflow-hidden">
-                <div className="absolute top-0 left-0 bottom-0 w-1 bg-warning/50"></div>
+                <div className="absolute top-0 left-0 bottom-0 w-1 bg-brand-yellow/50"></div>
                 <div className="flex items-center justify-between pl-3">
                   <div className="flex items-center gap-4">
                     <div className="w-9 h-9 rounded-xl bg-surface-secondary flex items-center justify-center text-text-muted">
@@ -111,18 +115,21 @@ export default function DashboardPage() {
         </div>
 
         <div className="xl:col-span-1 flex flex-col gap-4">
-          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest">ፈጣን እርምጃዎች</h2>
+          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-brand-blue"></span>
+            ፈጣን እርምጃዎች
+          </h2>
           <div className="bg-surface-primary/30 rounded-[2rem] border border-border/20 p-5 backdrop-blur-md flex flex-col gap-3 flex-1">
             <Link href="/dashboard/personnel/create" className="w-full py-3 bg-brand-blue/10 hover:bg-brand-blue/20 text-brand-blue rounded-xl text-sm font-medium transition-colors border border-brand-blue/20 flex items-center justify-center gap-2">
               <IconUsers size={16} /> አዲስ ሰራተኛ ጨምር
             </Link>
-            <Link href="/dashboard/news/create" className="w-full py-3 bg-surface-secondary hover:bg-surface-secondary/80 text-text-primary rounded-xl text-sm font-medium transition-colors border border-border/50 flex items-center justify-center gap-2">
+            <Link href="/dashboard/news/create" className="w-full py-3 bg-brand-yellow/10 hover:bg-brand-yellow/20 text-brand-yellow rounded-xl text-sm font-medium transition-colors border border-brand-yellow/20 flex items-center justify-center gap-2">
               <IconNews size={16} /> ዜና ጽሁፍ ፍጠር
             </Link>
             <Link href="/dashboard/qr-access" className="w-full py-3 bg-surface-secondary hover:bg-surface-secondary/80 text-text-primary rounded-xl text-sm font-medium transition-colors border border-border/50 flex items-center justify-center gap-2">
               <IconQrcode size={16} /> QR ኮዶችን ያስተዳድሩ
             </Link>
-            <Link href="/dashboard/statistics" className="w-full py-3 bg-brand-yellow/10 hover:bg-brand-yellow/20 text-brand-yellow rounded-xl text-sm font-medium transition-colors border border-brand-yellow/20 flex items-center justify-center gap-2">
+            <Link href="/dashboard/statistics" className="w-full py-3 bg-brand-blue/5 hover:bg-brand-blue/10 text-brand-blue rounded-xl text-sm font-medium transition-colors border border-brand-blue/10 flex items-center justify-center gap-2">
               <IconChartBar size={16} /> መረጃ ይመልከቱ
             </Link>
           </div>

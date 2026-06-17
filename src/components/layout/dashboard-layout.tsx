@@ -4,21 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { IconDashboard, IconNews, IconFileText, IconUsers, IconMessage2, IconSettings, IconSun, IconMoon, IconClipboardCheck, IconQrcode, IconChartBar, IconMessageStar, IconLogout } from '@tabler/icons-react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { IconDashboard, IconNews, IconFileText, IconUsers, IconMessage2, IconSettings, IconSun, IconMoon, IconClipboardCheck, IconQrcode, IconChartBar, IconMessageStar, IconShield } from '@tabler/icons-react';
+import Image from 'next/image';
 
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { t, language, setLanguage } = useI18n();
   const pathname = usePathname();
   const [isDark, setIsDark] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/auth/login');
-  };
 
   // Persist theme
   useEffect(() => {
@@ -66,6 +59,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     { label: t('assessment'), icon: IconClipboardCheck, href: '/dashboard/assessment' },
     { label: t('feedback'), icon: IconMessageStar, href: '/dashboard/feedback' },
     { label: t('statistics'), icon: IconChartBar, href: '/dashboard/statistics' },
+    { label: t('admins'), icon: IconShield, href: '/dashboard/admins' },
   ];
 
   return (
@@ -79,7 +73,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         {/* Floating Sidebar Toggle */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute top-1/2 -right-3.5 -translate-y-1/2 w-7 h-14 bg-surface-primary border border-border/50 shadow-sm rounded-full flex items-center justify-center text-text-muted hover:text-brand-blue hover:border-brand-blue/30 transition-all z-40 group cursor-pointer"
+          className="absolute top-1/2 -right-3.5 -translate-y-1/2 w-7 h-14 bg-surface-primary border border-border/50 shadow-sm rounded-full flex items-center justify-center text-text-muted hover:text-brand-blue hover:border-brand-blue/30 hover:bg-surface-secondary transition-all z-40 group cursor-pointer"
         >
           <div className={`transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isCollapsed ? 'rotate-180' : ''}`}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-current">
@@ -89,11 +83,22 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         </button>
 
         <div className={`p-4 flex items-center h-[88px] shrink-0 ${isCollapsed ? 'justify-center' : 'px-8'}`}>
-          <div className="font-heading text-2xl font-bold text-text-primary tracking-tight flex items-center gap-2 overflow-hidden whitespace-nowrap">
-            <span className="w-10 h-10 min-w-[40px] rounded-xl bg-gradient-to-br from-brand-blue to-brand-yellow/80 flex items-center justify-center text-white text-sm shadow-md">
-              <IconDashboard size={22} stroke={2} />
-            </span>
-            {!isCollapsed && <span>CIDMS</span>}
+          <div className="font-heading text-2xl font-bold text-text-primary tracking-tight flex items-center gap-3 overflow-hidden whitespace-nowrap">
+            <div className="relative w-10 h-10 min-w-[40px] rounded-xl overflow-hidden bg-white shadow-md ring-1 ring-border/50">
+              <Image
+                src="/logo.jpg"
+                alt="CIDMS Logo"
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+            {!isCollapsed && (
+              <div className="flex flex-col">
+                <span className="text-[15px] font-bold leading-tight">CIDMS</span>
+                <span className="text-[9px] text-text-muted font-medium tracking-wide">Commission System</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -112,14 +117,17 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                 title={isCollapsed ? item.label : undefined}
                 className={`flex items-center rounded-xl transition-all duration-200 group relative ${
                   isActive 
-                    ? 'bg-surface-secondary/80 text-text-primary shadow-sm border border-border/50'
+                    ? 'bg-brand-blue/8 text-text-primary shadow-sm border border-brand-blue/20'
                     : 'text-text-secondary hover:bg-surface-secondary/50 hover:text-text-primary border border-transparent'
                 } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5'}`}
               >
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-brand-blue rounded-r-full" />
+                )}
                 <item.icon 
                   size={20} 
                   stroke={isActive ? 2 : 1.5} 
-                  className={isActive ? 'text-text-primary' : 'text-text-muted group-hover:text-text-primary transition-colors'}
+                  className={isActive ? 'text-brand-blue' : 'text-text-muted group-hover:text-text-primary transition-colors'}
                 />
                 {!isCollapsed && <span className={`text-[13px] font-medium ${isActive ? 'text-text-primary' : ''}`}>{item.label}</span>}
               </Link>
@@ -130,8 +138,8 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         {/* Sidebar Footer Controls */}
         <div className={`p-4 mt-auto border-t border-border/50`}>
           <button className={`w-full flex items-center gap-3 rounded-xl hover:bg-surface-secondary/80 transition-all border border-transparent hover:border-border/50 ${isCollapsed ? 'justify-center p-2' : 'px-3 py-2'}`}>
-            <div className="w-9 h-9 rounded-full bg-surface-secondary flex items-center justify-center border border-border/50 shrink-0 shadow-sm">
-              <span className="text-xs font-bold text-text-primary">AD</span>
+            <div className="w-9 h-9 rounded-full bg-brand-blue/10 flex items-center justify-center border border-brand-blue/20 shrink-0 shadow-sm">
+              <span className="text-xs font-bold text-brand-blue">AD</span>
             </div>
             {!isCollapsed && (
               <>
@@ -153,11 +161,14 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
       <div className="flex-1 flex flex-col overflow-hidden bg-[url('/noise.png')] bg-repeat opacity-100 relative">
         {/* Top Navigation Bar */}
         <header className="h-[88px] shrink-0 flex items-center justify-between px-10 relative z-20">
-          <div></div>
+          <div className="flex items-center gap-3">
+            <div className="h-1 w-12 bg-brand-blue rounded-full"></div>
+            <div className="h-1 w-6 bg-brand-yellow rounded-full"></div>
+          </div>
           <div className="flex items-center gap-1 bg-surface-primary/60 backdrop-blur-md p-1.5 rounded-full border border-border/30 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
             <Link 
               href="/dashboard/settings"
-              className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-surface-secondary/80 hover:text-text-primary text-text-secondary transition-all"
+              className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-brand-blue/10 hover:text-brand-blue text-text-secondary transition-all"
               title={t('settings')}
             >
               <IconSettings size={18} stroke={2} />
@@ -165,7 +176,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
             <div className="w-[1px] h-4 bg-border/50 mx-1"></div>
             <button 
               onClick={() => setLanguage(language === 'en' ? 'am' : 'en')} 
-              className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-surface-secondary/80 hover:text-text-primary text-text-secondary transition-all text-xs font-bold tracking-wider"
+              className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-brand-blue/10 hover:text-brand-blue text-text-secondary transition-all text-xs font-bold tracking-wider"
               title={t('toggleLanguage')}
             >
               {language === 'en' ? 'AM' : 'EN'}
@@ -173,18 +184,10 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
             <div className="w-[1px] h-4 bg-border/50"></div>
             <button 
               onClick={toggleTheme} 
-              className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-surface-secondary/80 hover:text-text-primary text-text-secondary transition-all"
+              className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-brand-yellow/10 hover:text-brand-yellow text-text-secondary transition-all"
               title={t('toggleTheme')}
             >
               {isDark ? <IconSun size={18} stroke={2} /> : <IconMoon size={18} stroke={2} />}
-            </button>
-            <div className="w-[1px] h-4 bg-border/50"></div>
-            <button 
-              onClick={handleLogout}
-              className="w-10 h-10 flex justify-center items-center rounded-full hover:bg-red-50 hover:text-red-600 text-text-secondary transition-all"
-              title="Sign Out"
-            >
-              <IconLogout size={18} stroke={2} />
             </button>
           </div>
         </header>
