@@ -3,13 +3,13 @@ import Link from "next/link";
 const summaryCards = [
   { amharic: "አጠቃላይ መዋቅር", value: "106,174", sub: "ክልሎች / ዞኖች / ወረዳዎች" },
   { amharic: "የኮሚሽን አባላት", value: "531,894", sub: "በሁሉም ክልሎች" },
-  { amharic: "ኃላፊዎች", value: "2,584", sub: "ንቁ አመራር" },
-  { amharic: "ቀበሌ", value: "16,796", sub: "አካባቢያዊ ክፍሎች" },
+  { amharic: "ኀላፊዎች", value: "2,584", sub: "ንቁ አመራር" },
+  { amharic: "ህብረት", value: "88,232", sub: "በሁሉም ክልሎች" },
 ];
 
 export function AnalyticsSection() {
   return (
-    <section id="analytics" className="relative flex min-h-[100svh] flex-col justify-center overflow-hidden bg-white py-16" aria-labelledby="analytics-heading">
+    <section id="analytics" className="relative overflow-hidden bg-white py-24 sm:py-28" aria-labelledby="analytics-heading">
       <div className="container-site flex flex-col gap-12">
         <div>
           <h2 id="analytics-heading" className="font-heading text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
@@ -31,7 +31,7 @@ export function AnalyticsSection() {
           ))}
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex justify-start">
           <Link
             href="/statistics"
             className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"

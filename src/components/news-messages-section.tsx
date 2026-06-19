@@ -158,7 +158,7 @@ export function NewsMessagesSection() {
                     </p>
                   </div>
                   <Link
-                    href={`#news-${item.id}`}
+                    href={`/news/${item.id}`}
                     className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold transition-colors"
                     style={{ color: "#014BAA" }}
                     aria-label={`${item.title} ሙሉ ይዘት`}

@@ -81,9 +81,14 @@ export function Menubar() {
               className="object-contain"
             />
           </div>
-          <span className="hidden text-base font-bold tracking-tight text-slate-900 sm:block">
-            የብልፅግና ኢንስፔክሽን
-          </span>
+          <div className="hidden sm:block">
+            <div className="text-sm font-bold leading-tight text-slate-900">
+              የብልፅግና የኢንስፔክሽንና
+            </div>
+            <div className="text-sm font-medium leading-tight text-slate-700">
+              የሥነ-ምግባር ኮሚሽን
+            </div>
+          </div>
         </Link>
 
         <nav className="hidden md:block absolute left-1/2 -translate-x-1/2">

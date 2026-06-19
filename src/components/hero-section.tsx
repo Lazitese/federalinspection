@@ -13,16 +13,16 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const LINE_1 = "የፌዴራል ብልፅግና";
-const LINE_2 = "የኢንስፔክሽንና የስነ ምግባር ኮሚሽን";
+const LINE_1 = "የብልፅግና የኢንስፔክሽንና የሥነ-ምግባር ኮሚሽን";
+const LINE_2 = "ዋና ጽ/ቤት";
 const FULL_TEXT = LINE_1 + "\n" + LINE_2;
 const TYPING_SPEED = 80;
 
 const heroStats = [
-  { value: "531K+", label: "አባላት", icon: Users },
-  { value: "106K+", label: "መዋቅር", icon: Shield },
+  { value: "531,894", label: "አባላት", icon: Users },
+  { value: "106,174", label: "መዋቅር", icon: Shield },
   { value: "14", label: "ክልሎች", icon: MapPin },
-  { value: "2,584", label: "ኃላፊዎች", icon: Scale },
+  { value: "88,232", label: "ህብረት", icon: Scale },
 ];
 
 export function HeroSection() {
@@ -69,7 +69,7 @@ export function HeroSection() {
         {/* Horizontal accent stripe — top */}
         <div
           className="absolute inset-x-0 top-0 h-1.5"
-          style={{ background: "linear-gradient(90deg, #014BAA 0%, #014BAA 45%, #FFB800 55%, #FFB800 100%)" }}
+          style={{ backgroundColor: "#014BAA" }}
         />
         <div className="absolute inset-x-0 top-1.5 h-px bg-white/50" />
 
@@ -172,20 +172,20 @@ export function HeroSection() {
             style={{ opacity: isDone ? 1 : 0.3 }}
           >
             <Link
-              href="/tikoma"
-              className="group flex h-14 items-center justify-center gap-3 rounded-2xl px-10 text-base font-bold text-white shadow-[0_8px_24px_-6px_rgba(1,75,170,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_-8px_rgba(1,75,170,0.55)]"
-              style={{ backgroundColor: "#014BAA" }}
-            >
-              ጥቆማ
-              <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-            <Link
               href="/abetuta"
               className="group flex h-14 items-center justify-center gap-3 rounded-2xl bg-white/90 px-10 text-base font-bold shadow-sm ring-1 ring-slate-200/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-md"
               style={{ color: "#014BAA" }}
             >
               <FileText className="size-5 text-slate-400 transition-colors group-hover:text-[#014BAA]" />
               አቤቱታ
+            </Link>
+            <Link
+              href="/tikoma"
+              className="group flex h-14 items-center justify-center gap-3 rounded-2xl px-10 text-base font-bold text-white shadow-[0_8px_24px_-6px_rgba(1,75,170,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_-8px_rgba(1,75,170,0.55)]"
+              style={{ backgroundColor: "#014BAA" }}
+            >
+              ጥቆማ
+              <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
         </div>
@@ -196,20 +196,15 @@ export function HeroSection() {
           style={{ opacity: isDone ? 1 : 0.5 }}
         >
           <div className="relative overflow-hidden rounded-3xl bg-white/75 p-6 shadow-[0_24px_60px_-20px_rgba(1,75,170,0.2)] ring-1 ring-white/80 backdrop-blur-md sm:p-8">
-            {/* Shimmer accent bar */}
+            {/* Accent bar */}
             <div
               className="absolute inset-x-0 top-0 h-1"
-              style={{
-                background: "linear-gradient(90deg, transparent, #014BAA, #FFB800, transparent)",
-                backgroundSize: "200% 100%",
-                animation: "hero-shimmer 4s linear infinite",
-              }}
+              style={{ backgroundColor: "#014BAA" }}
             />
 
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#014BAA]">በአጭሩ</p>
-                <p className="mt-1 text-sm text-slate-500">የብሔራዊ ኮሚሽን ስፋት</p>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#014BAA]">የኮሚሽኑ መዋቅር መረጃዎች</p>
               </div>
               <div className="flex size-11 items-center justify-center rounded-2xl bg-[#014BAA]/10 text-[#014BAA]">
                 <Shield className="size-6" />
@@ -232,7 +227,7 @@ export function HeroSection() {
             </div>
 
             <Link
-              href="/statistics"
+              href="/analytics"
               className="mt-5 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition-all hover:opacity-90"
               style={{ backgroundColor: "#014BAA" }}
             >

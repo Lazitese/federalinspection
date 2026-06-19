@@ -1,6 +1,50 @@
-import { Quote } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Quote, ChevronLeft, ChevronRight } from "lucide-react";
+
+const messages = [
+  {
+    id: 1,
+    name: "ዋና ኮሚሽነሩ",
+    title: "ዋና ኮሚሽነር",
+    org: "የፌዴራል ብልፅግና ኢንስፔክሽን ኮሚሽን",
+    paragraphs: [
+      "የፌዴራሉ ብልፅግና ኢንስፔክሽን ኮሚሽን — ፓርቲያችን ያወጣቸውን ሕጎች፣ ደንቦችና መምሪያዎች በሥራ ላይ ስለመዋላቸው ቁጥጥርና ክትትል ያደርጋል።",
+      "ኮሚሽናችን ሙሳና ብልሹ አሠራርን ለመዋጋት፣ የፓርቲው ሥነ-ምግባርና ዲሲፕሊን ጥቅም ላይ ስለመዋሉ የቀጣይ ክትትልና ምርምራ ያካሄዳል።",
+      "ጠንካራ ኢንስፔክሽን ለጠንካራ ፓርቲ — ይህ ያልተናወጸ ቁርጠኝነታችን ነው።",
+    ],
+  },
+  {
+    id: 2,
+    name: "ምክትል ኮሚሽነር",
+    title: "ምክትል ኮሚሽነር",
+    org: "የፌዴራል ብልፅግና ኢንስፔክሽን ኮሚሽን",
+    paragraphs: [
+      "ኮሚሽናችን በፓርቲው መርሆዎች መሠረት ፍትሐዊ እና ግልጽ የሆነ የኢንስፔክሽን አገልግሎት ለማበርከት የተቋቋመ ነው።",
+      "የኮሚሽኑ አባላት በሙሉ በታማኝነት፣ በትጋት እና በሙያዊ ሥነ-ምግባር የተገኙ ሲሆኑ ለፓርቲው እድገት ያላሰለሰ ጥረት እያደረጉ ይገኛሉ።",
+      "ወደፊትም ኮሚሽኑ ተግባሩን በተሻለ ደረጃ ለማከናወን የቴክኖሎጂ አጠቃቀምን በማስፋት አገልግሎቱን ዘመናዊ ለማድረግ እየሰራ ይገኛል።",
+    ],
+  },
+  {
+    id: 3,
+    name: "ዋና ሥራ አስኪያጁ",
+    title: "ዋና ሥራ አስኪያጅ",
+    org: "የፌዴራል ብልፅግና ኢንስፔክሽን ኮሚሽን",
+    paragraphs: [
+      "በኮሚሽናችን የምንሰራው ሥራ ለፓርቲው መጠናከር እና ለሀገራችን ዕድገት ትልቅ ፋይዳ አለው።",
+      "የኢንስፔክሽን ሥራውን በአግባቡ በማከናወን የፓርቲውን ሀብት በአግባቡ ጥቅም ላይ መዋሉን ማረጋገጥ የእኛ ዋና ተግባር ነው።",
+    ],
+  },
+];
 
 export function ChairmanMessageSection() {
+  const [current, setCurrent] = useState(0);
+  const msg = messages[current];
+
+  const prev = () => setCurrent((c) => (c === 0 ? messages.length - 1 : c - 1));
+  const next = () => setCurrent((c) => (c === messages.length - 1 ? 0 : c + 1));
+
   return (
     <section
       id="chairman-message"
@@ -18,48 +62,40 @@ export function ChairmanMessageSection() {
 
       <div className="container-site relative z-10">
         <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-24">
-
           {/* ── Left: Photo ── */}
           <div className="flex items-center justify-center lg:justify-start">
             <div className="relative">
-              {/* Yellow accent block behind photo */}
+              {/* Accent blocks behind photo */}
               <div
                 className="absolute -bottom-4 -left-4 h-full w-full rounded-3xl"
                 style={{ backgroundColor: "#FFB800", opacity: 0.15 }}
                 aria-hidden="true"
               />
-              {/* Blue accent block behind photo */}
               <div
                 className="absolute -top-4 -right-4 h-full w-full rounded-3xl"
                 style={{ backgroundColor: "#014BAA", opacity: 0.08 }}
                 aria-hidden="true"
               />
 
-              {/* Photo placeholder — replace src with actual leader photo */}
+              {/* Photo placeholder */}
               <div className="relative h-[460px] w-[340px] overflow-hidden rounded-3xl bg-gradient-to-br from-slate-200 to-slate-100 shadow-2xl ring-1 ring-slate-200 sm:h-[520px] sm:w-[380px]">
-                {/* Placeholder silhouette when no photo is available */}
                 <div className="flex h-full w-full flex-col items-center justify-center gap-4">
                   <div className="flex size-28 items-center justify-center rounded-full bg-slate-200">
-                    <svg
-                      className="size-16 text-slate-400"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
+                    <svg className="size-16 text-slate-400" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
                     </svg>
                   </div>
                   <p className="text-sm font-medium text-slate-400">የሃላፊ ፎቶ</p>
                 </div>
 
-                {/* Name plate overlay at bottom */}
+                {/* Name plate overlay */}
                 <div
                   className="absolute bottom-0 left-0 right-0 px-6 py-5"
                   style={{ background: "linear-gradient(to top, rgba(1,75,170,0.95) 0%, transparent 100%)" }}
                 >
-                  <p className="text-lg font-bold text-white">ዋና ኮሚሽነሩ</p>
+                  <p className="text-lg font-bold text-white">{msg.title}</p>
                   <p className="mt-0.5 text-sm font-medium text-white/70">
-                    የፌዴራል ብልፅግና ኢንስፔክሽን ኮሚሽን
+                    {msg.org}
                   </p>
                 </div>
               </div>
@@ -68,49 +104,29 @@ export function ChairmanMessageSection() {
 
           {/* ── Right: Message ── */}
           <div className="flex flex-col">
-            {/* Eyebrow */}
-            <p className="mb-6 text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
-              የሃላፊ መልዕክት
-            </p>
-
-            {/* Section heading */}
             <h2
               id="chairman-heading"
               className="font-heading text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl xl:text-5xl"
             >
-              ለዜጎቻችን{" "}
-              <span style={{ color: "#014BAA" }}>የምናቀርበው</span>
-              <br />
-              <span className="text-slate-400">ቃልኪዳን</span>
+              መልዕክት
             </h2>
 
-            {/* Yellow accent */}
             <div
               className="mt-6 mb-8 h-1.5 w-14 rounded-full"
               style={{ backgroundColor: "#FFB800" }}
               aria-hidden="true"
             />
 
-            {/* Quote icon */}
             <Quote
               className="mb-4 size-8 rotate-180 opacity-20"
               style={{ color: "#014BAA" }}
               aria-hidden="true"
             />
 
-            {/* Message body */}
             <blockquote className="space-y-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-              <p>
-                የፌዴራሉ ብልፅግና ኢንስፔክሽን ኮሚሽን — ፓርቲያችን ያወጣቸውን ሕጎች፣ ደንቦችና መምሪያዎች
-                በሥራ ላይ ስለመዋላቸው ቁጥጥርና ክትትል ያደርጋል።
-              </p>
-              <p>
-                ኮሚሽናችን ሙሳና ብልሹ አሠራርን ለመዋጋት፣ የፓርቲው ሥነ-ምግባርና ዲሲፕሊን ጥቅም ላይ
-                ስለመዋሉ የቀጣይ ክትትልና ምርምራ ያካሄዳል።
-              </p>
-              <p>
-                ጠንካራ ኢንስፔክሽን ለጠንካራ ፓርቲ — ይህ ያልተናወጸ ቁርጠኝነታችን ነው።
-              </p>
+              {msg.paragraphs.map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
             </blockquote>
 
             <Quote
@@ -127,14 +143,43 @@ export function ChairmanMessageSection() {
                 aria-hidden="true"
               />
               <div>
-                <p className="text-base font-bold text-slate-900">ዋና ኮሚሽነሩ</p>
-                <p className="mt-0.5 text-sm font-medium text-slate-500">
-                  የፌዴራሉ ብልፅግና ኢንስፔክሽን ኮሚሽን
-                </p>
+                <p className="text-base font-bold text-slate-900">{msg.name}</p>
+                <p className="mt-0.5 text-sm font-medium text-slate-500">{msg.org}</p>
               </div>
             </div>
-          </div>
 
+            {/* Navigation dots + arrows */}
+            <div className="mt-8 flex items-center justify-start gap-4">
+              <button
+                onClick={prev}
+                className="flex size-9 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm ring-1 ring-slate-200 transition-all hover:text-[#014BAA] hover:ring-[#014BAA]/30"
+                aria-label="ቀዳሚ"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <div className="flex items-center gap-2">
+                {messages.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrent(i)}
+                    className={`rounded-full transition-all duration-300 ${
+                      i === current
+                        ? "h-2.5 w-8 bg-[#014BAA]"
+                        : "h-2.5 w-2.5 bg-slate-300 hover:bg-slate-400"
+                    }`}
+                    aria-label={`መልዕክት ${i + 1}`}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={next}
+                className="flex size-9 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm ring-1 ring-slate-200 transition-all hover:text-[#014BAA] hover:ring-[#014BAA]/30"
+                aria-label="ቀጣይ"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
