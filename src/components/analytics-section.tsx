@@ -17,7 +17,7 @@ export function AnalyticsSection() {
           <div className="mt-5 h-1 w-12 rounded-full" style={{ backgroundColor: "#FFB800" }} />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {summaryCards.map((card) => (
             <div key={card.amharic} className="group flex flex-col gap-3 rounded-3xl bg-slate-50 p-6 ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_28px_-8px_rgba(1,75,170,0.10)] hover:ring-[#014BAA]/20">
               <p className="text-3xl font-bold tabular-nums" style={{ color: "#014BAA" }}>{card.value}</p>

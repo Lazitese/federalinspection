@@ -152,8 +152,8 @@ export default function ContactPage() {
                   </div>
                   <div className="mt-5 space-y-4 border-t border-slate-100 pt-5">
                     <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-5 py-4 ring-1 ring-slate-100">
-                      <span className="text-sm font-bold text-slate-700">ሰኞ - አርብ</span>
-                      <span className="text-sm font-semibold text-slate-500">2:00 - 11:30</span>
+                      <span className="text-sm font-bold text-slate-700">ሰኞ - እሑድ</span>
+                      <span className="text-sm font-semibold text-slate-500">2:30 - 11:30</span>
                     </div>
                     <p className="text-xs font-medium text-slate-400">(የሀገር ውስጥ ሰዓት)</p>
                   </div>

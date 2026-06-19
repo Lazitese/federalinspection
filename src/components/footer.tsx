@@ -147,7 +147,7 @@ export function Footer() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Clock className="mt-0.5 size-4 shrink-0" style={{ color: "#FFB800" }} aria-hidden="true" />
-                  <span>ሰኞ - አርብ፣ 2:00 - 11:30</span>
+                   <span>ሰኞ - እሑድ፣ 2:30 - 11:30</span>
                 </li>
               </ul>
             </div>

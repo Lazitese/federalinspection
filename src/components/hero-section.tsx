@@ -261,7 +261,7 @@ export function HeroSection() {
 
             {/* CTA */}
             <Link
-              href="/analytics"
+              href="/statistics"
               className="mt-6 flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold text-white transition-all hover:shadow-lg hover:opacity-90"
               style={{ backgroundColor: "#014BAA" }}
             >
@@ -273,20 +273,10 @@ export function HeroSection() {
           {/* Decorative offset card */}
           <div
             className="absolute -bottom-4 -right-4 -z-10 hidden h-full w-full rounded-3xl lg:block"
-            style={{ background: "linear-gradient(135deg, #014BAA 0%, #FFB800 100%)", opacity: 0.12 }}
+            style={{ backgroundColor: "#014BAA", opacity: 0.08 }}
             aria-hidden="true"
           />
         </div>
-      </div>
-
-      {/* Bottom wave divider */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0" aria-hidden="true">
-        <svg viewBox="0 0 1440 80" fill="none" className="w-full text-white" preserveAspectRatio="none">
-          <path
-            d="M0 40C240 80 480 0 720 40C960 80 1200 0 1440 40V80H0V40Z"
-            fill="currentColor"
-          />
-        </svg>
       </div>
     </section>
   );

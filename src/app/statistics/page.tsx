@@ -11,7 +11,6 @@ const summaryCards = [
   { label: "አጠቃላይ መዋቅር", labelEn: "Total Structure", value: 106174, icon: Layers, color: "#014BAA" },
   { label: "የኮሚሽን አባላት", labelEn: "Commission Members", value: 531894, icon: Users, color: "#FFB800" },
   { label: "ኃላፊዎች", labelEn: "Responsible Persons", value: 2584, icon: Building2, color: "#10B981" },
-  { label: "ቀበሌ", labelEn: "Kebeles", value: 16796, icon: MapPin, color: "#8B5CF6" },
 ];
 
 const coverage = [
@@ -171,15 +170,13 @@ export default function StatisticsPage() {
               <ChevronRight className="size-4" />
               <span style={{ color: "#014BAA" }}>መረጃ</span>
             </div>
-            <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              የኮሚሽኑ መዋቅር መረጃዎች — የክልሎች፣ ዞኖች፣ ወረዳዎች፣ ቀበሌዎች፣ አባላት እና ኃላፊዎች አጠቃላይ ማጠቃለያ
-            </p>
+
           </div>
         </section>
 
         {/* ═══ Summary Cards ═══ */}
         <section className="container-site -mt-12 relative z-20">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {summaryCards.map((card) => {
               const Icon = card.icon;
               return (
