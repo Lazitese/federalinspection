@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 // Force webpack rebuild to pick up the .tsx extension
 import { AdminProvider, useAdmin } from '@/lib/hooks/useAdmin';
@@ -11,6 +11,39 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [authChecking, setAuthChecking] = useState(true);
+
+  const lastActivityRef = useRef<number>(Date.now());
+  const inactivityIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (loading || authChecking || !profile) return;
+
+    // Update last activity timestamp on any user action
+    const updateActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => window.addEventListener(event, updateActivity, { passive: true }));
+
+    // Check every 10 seconds if 5 minutes have passed since last activity
+    inactivityIntervalRef.current = setInterval(() => {
+      const timeSinceLastActivity = Date.now() - lastActivityRef.current;
+      if (timeSinceLastActivity >= 300000) { // 5 minutes
+        clearInterval(inactivityIntervalRef.current!);
+        supabase.auth.signOut().then(() => {
+          router.push('/auth/login?reason=inactivity');
+        });
+      }
+    }, 10000);
+
+    return () => {
+      events.forEach(event => window.removeEventListener(event, updateActivity));
+      if (inactivityIntervalRef.current) {
+        clearInterval(inactivityIntervalRef.current);
+      }
+    };
+  }, [loading, authChecking, profile, router]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

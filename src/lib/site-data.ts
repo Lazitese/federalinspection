@@ -92,6 +92,12 @@ export const navLinks: NavLink[] = [
 
   { label: "መረጃ", href: "/statistics" },
 
+  { label: "አቤቱታ", href: "/abetuta" },
+
+  { label: "ጥቆማ", href: "/tikoma" },
+
+  { label: "አስተያየት", href: "/asteyayet" },
+
   { label: "ያግኙን", href: "/contact" },
 
 ];

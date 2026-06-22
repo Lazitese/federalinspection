@@ -128,10 +128,10 @@ export function Menubar() {
             </Link>
           ) : (
             <Link
-              href="/auth/login"
-              className="hidden items-center justify-center rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(0,0,0,0.15)] transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] md:flex"
+              href="/contact"
+              className="hidden items-center justify-center rounded-full bg-[#014BAA] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(1,75,170,0.3)] transition-all duration-300 hover:scale-105 hover:bg-blue-800 hover:shadow-[0_6px_20px_rgba(1,75,170,0.4)] md:flex"
             >
-              Login
+              ያግኙን
             </Link>
           )}
 
@@ -186,11 +186,11 @@ export function Menubar() {
                     </Link>
                   ) : (
                     <Link
-                      href="/auth/login"
+                      href="/contact"
                       onClick={handleNavClick}
-                      className="flex h-14 w-full items-center justify-center rounded-2xl bg-slate-900 px-4 text-base font-semibold text-white shadow-md transition-all duration-300 hover:bg-slate-800 hover:shadow-lg"
+                      className="flex h-14 w-full items-center justify-center rounded-2xl bg-[#014BAA] px-4 text-base font-semibold text-white shadow-md transition-all duration-300 hover:bg-blue-800 hover:shadow-lg"
                     >
-                      Login
+                      ያግኙን
                     </Link>
                   )}
                 </li>

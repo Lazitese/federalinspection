@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
+import { verifyLoginAttempt } from "@/app/actions/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,6 +17,14 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    try {
+      await verifyLoginAttempt();
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+      return;
+    }
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,

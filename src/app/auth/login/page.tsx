@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { maskSupabaseError } from '@/lib/errorMasking';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
+import { verifyLoginAttempt } from '@/app/actions/auth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -26,6 +27,9 @@ export default function LoginPage() {
     setSuccessMsg(null);
 
     try {
+      // Check rate limit first
+      await verifyLoginAttempt();
+
       let authEmail = email;
       if (!authEmail.includes('@')) {
         authEmail = `${authEmail}@federal.local`;

@@ -2,13 +2,30 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { checkRateLimit } from "@/lib/rateLimit";
 
-export async function submitFeedback(rating: string, review: string) {
+export async function submitFeedback(category: string, rating: string, review: string) {
   let sentiment = "neutral";
-  if (rating === "excellent") sentiment = "positive";
+  if (rating === "very-good") sentiment = "positive";
+  else if (rating === "needs-improvement") sentiment = "negative";
+  // For backwards compatibility
+  else if (rating === "excellent") sentiment = "positive";
   else if (["bad", "very-bad"].includes(rating)) sentiment = "negative";
 
+  const headersList = await headers();
+  const forwardedFor = headersList.get('x-forwarded-for');
+  const ip = forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1';
+
+  // Limit: 50 feedback submissions per 120 minutes per IP (Sensible for testing/NAT)
+  const { allowed } = await checkRateLimit(ip, 'submit_feedback', 50, 120);
+  
+  if (!allowed) {
+    throw new Error("ለጊዜው አስተያየት መስጠት አይችሉም፣ እባክዎ ከ2 ሰዓት በኋላ እንደገና ይሞክሩ።");
+  }
+
   const { error } = await supabaseAdmin.from("feedbacks").insert({
+    category,
     rating,
     review,
     sentiment,

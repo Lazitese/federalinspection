@@ -7,47 +7,56 @@ import {
   IconAdjustmentsHorizontal,
   IconStar,
   IconStarFilled,
-  IconLoader2
+  IconLoader2,
+  IconTag
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { getFeedbacks } from "@/app/actions/feedback";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
 
-type RatingId = "excellent" | "good" | "bad" | "very-bad";
+type RatingId = "very-good" | "good" | "needs-improvement" | "excellent" | "bad" | "very-bad";
 
 interface FeedbackItem {
   id: string;
+  category?: string;
   rating: RatingId;
   review: string;
   sentiment: string;
   created_at: string;
 }
 
-const RATING_LABELS: Record<RatingId, string> = {
-  excellent: "በጣም ጥሩ",
-  good: "ጥሩ",
-  bad: "መጥፎ",
-  "very-bad": "በጣም መጥፎ",
+const RATING_LABELS: Record<string, string> = {
+  "very-good": "በጣም ጥሩ",
+  "good": "ጥሩ",
+  "needs-improvement": "መስተካከል አለበት (*)",
+  "excellent": "በጣም ጥሩ (ድሮ)",
+  "bad": "መጥፎ (ድሮ)",
+  "very-bad": "በጣም መጥፎ (ድሮ)",
 };
 
-const RATING_COLORS: Record<RatingId, string> = {
-  excellent: "text-success bg-success/10",
-  good: "text-brand-blue/80 bg-brand-blue/5",
-  bad: "text-warning bg-warning/10",
+const RATING_COLORS: Record<string, string> = {
+  "very-good": "text-success bg-success/10",
+  "good": "text-brand-blue/80 bg-brand-blue/5",
+  "needs-improvement": "text-warning bg-warning/10",
+  "excellent": "text-success bg-success/10",
+  "bad": "text-warning bg-warning/10",
   "very-bad": "text-danger bg-danger/10",
 };
 
 const ratingFilters: { id: RatingId | "all"; label: string }[] = [
   { id: "all", label: "ሁሉም" },
-  { id: "excellent", label: RATING_LABELS.excellent },
-  { id: "good", label: RATING_LABELS.good },
-  { id: "bad", label: RATING_LABELS.bad },
-  { id: "very-bad", label: RATING_LABELS["very-bad"] },
+  { id: "very-good", label: "በጣም ጥሩ" },
+  { id: "good", label: "ጥሩ" },
+  { id: "needs-improvement", label: "መስተካከል አለበት" },
 ];
 
-function RatingStars({ rating }: { rating: RatingId }) {
-  const positive = rating === "excellent" || rating === "good";
-  const count = rating === "excellent" ? 5 : rating === "good" ? 3 : rating === "bad" ? 2 : 1;
+function RatingStars({ rating }: { rating: string }) {
+  const positive = ["excellent", "very-good", "good"].includes(rating);
+  let count = 0;
+  if (rating === "excellent" || rating === "very-good") count = 5;
+  else if (rating === "good") count = 4;
+  else if (rating === "needs-improvement" || rating === "bad") count = 2;
+  else count = 1;
 
   return (
     <div className="flex items-center gap-0.5">
@@ -88,10 +97,9 @@ export default function FeedbackPage() {
 
   const counts = {
     all: feedbacks.length,
-    excellent: feedbacks.filter((f) => f.rating === "excellent").length,
+    "very-good": feedbacks.filter((f) => f.rating === "very-good").length,
     good: feedbacks.filter((f) => f.rating === "good").length,
-    bad: feedbacks.filter((f) => f.rating === "bad").length,
-    "very-bad": feedbacks.filter((f) => f.rating === "very-bad").length,
+    "needs-improvement": feedbacks.filter((f) => f.rating === "needs-improvement").length,
   };
 
   // Prepare chart data
@@ -110,11 +118,28 @@ export default function FeedbackPage() {
   ].filter(d => d.value > 0);
 
   const barData = [
-    { name: 'Excellent', count: counts.excellent },
+    { name: 'Very Good', count: counts["very-good"] },
     { name: 'Good', count: counts.good },
-    { name: 'Bad', count: counts.bad },
-    { name: 'Very Bad', count: counts["very-bad"] },
+    { name: 'Needs Imp.', count: counts["needs-improvement"] },
   ];
+
+  // Calculate category data
+  const categoryStats = feedbacks.reduce((acc, f) => {
+    if (!f.category) return acc;
+    const cat = f.category;
+    if (!acc[cat]) {
+        acc[cat] = { name: cat, positive: 0, negative: 0, neutral: 0, total: 0 };
+    }
+    acc[cat].total += 1;
+    if (f.sentiment === 'positive') acc[cat].positive += 1;
+    else if (f.sentiment === 'negative') acc[cat].negative += 1;
+    else acc[cat].neutral += 1;
+    return acc;
+  }, {} as Record<string, { name: string, positive: number, negative: number, neutral: number, total: number }>);
+
+  const categoryData = Object.values(categoryStats)
+    .filter(d => d.total > 0)
+    .sort((a, b) => b.total - a.total);
 
   return (
     <DashboardLayout>
@@ -193,11 +218,62 @@ export default function FeedbackPage() {
                     </ResponsiveContainer>
                   </div>
                 </div>
+
+                {/* Category Distribution Recharts Chart */}
+                {categoryData.length > 0 && (
+                  <div className="col-span-1 md:col-span-2 mt-2 p-7 border border-border/20 rounded-[2rem] bg-gradient-to-br from-surface-primary/50 to-surface-secondary/30 flex flex-col w-full shadow-sm backdrop-blur-sm">
+                    <div className="flex flex-col mb-8">
+                      <h3 className="text-lg font-bold text-text-primary tracking-tight">የአገልግሎት ዘርፍ ግምገማዎች (Service Category Ratings)</h3>
+                      <p className="text-sm text-text-muted mt-1">በእያንዳንዱ የአገልግሎት ዓይነት (Category) የተሰጡ አስተያየቶች ስርጭት</p>
+                    </div>
+                    
+                    <div className="w-full" style={{ height: Math.max(300, categoryData.length * 70) }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart 
+                          data={categoryData} 
+                          layout="vertical" 
+                          margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                          barGap={2}
+                          barCategoryGap={16}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={true} stroke="var(--border)" strokeOpacity={0.4} />
+                          <XAxis type="number" hide />
+                          <YAxis 
+                            dataKey="name" 
+                            type="category" 
+                            width={160} 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: 'var(--text-secondary)', fontSize: 12, fontWeight: 500 }} 
+                          />
+                          <Tooltip 
+                            cursor={{ fill: 'var(--text-muted)', opacity: 0.1 }} 
+                            contentStyle={{ 
+                              borderRadius: '12px', 
+                              fontSize: '13px', 
+                              border: '1px solid var(--border)', 
+                              background: 'var(--surface-primary)', 
+                              color: 'var(--text-primary)', 
+                              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
+                            }}
+                          />
+                          <Legend 
+                            wrapperStyle={{ paddingTop: '20px', fontSize: '13px' }} 
+                            iconType="circle"
+                          />
+                          <Bar dataKey="positive" name="ጥሩ (Positive)" fill="#10b981" radius={[0, 4, 4, 0]} barSize={12} />
+                          <Bar dataKey="neutral" name="መካከለኛ (Neutral)" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={12} />
+                          <Bar dataKey="negative" name="መጥፎ (Negative)" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={12} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Summary cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {ratingFilters.map((filter) => (
                 <button
                   key={filter.id}
@@ -209,7 +285,7 @@ export default function FeedbackPage() {
                   }`}
                 >
                   <span className="text-2xl font-light text-text-primary tabular-nums">
-                    {counts[filter.id]}
+                    {counts[filter.id as keyof typeof counts] || 0}
                   </span>
                   <span className="text-[11px] font-semibold text-text-muted leading-tight">{filter.label}</span>
                 </button>
@@ -229,35 +305,47 @@ export default function FeedbackPage() {
                     key={item.id}
                     className="bg-surface-primary/30 border border-border/20 rounded-2xl p-5 backdrop-blur-sm hover:bg-surface-primary/50 transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <span className="text-xs font-bold text-text-muted truncate max-w-24">#{item.id.split('-')[0]}</span>
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${RATING_COLORS[item.rating]}`}
-                          >
-                            {RATING_LABELS[item.rating]}
-                          </span>
-                          <RatingStars rating={item.rating} />
-                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                            item.sentiment === 'positive' ? 'bg-success/10 text-success' :
-                            item.sentiment === 'negative' ? 'bg-danger/10 text-danger' :
-                            'bg-brand-blue/10 text-brand-blue'
-                          }`}>
-                            {item.sentiment}
-                          </span>
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="text-xs font-bold text-text-muted truncate max-w-24">#{item.id.split('-')[0]}</span>
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${RATING_COLORS[item.rating]}`}
+                            >
+                              {RATING_LABELS[item.rating] || item.rating}
+                            </span>
+                            <RatingStars rating={item.rating} />
+                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                              item.sentiment === 'positive' ? 'bg-success/10 text-success' :
+                              item.sentiment === 'negative' ? 'bg-danger/10 text-danger' :
+                              'bg-brand-blue/10 text-brand-blue'
+                            }`}>
+                              {item.sentiment}
+                            </span>
+                          </div>
                         </div>
-                        <p className="mt-3 text-sm text-text-primary leading-relaxed">{item.review}</p>
+                        <span className="text-[11px] text-text-muted shrink-0 whitespace-nowrap">
+                          {new Date(item.created_at).toLocaleDateString('am-ET', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
                       </div>
-                      <span className="text-[11px] text-text-muted shrink-0 whitespace-nowrap">
-                        {new Date(item.created_at).toLocaleDateString('am-ET', {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
+                      
+                      {item.category && (
+                        <div className="flex items-center gap-2 text-sm font-semibold text-text-secondary bg-surface-secondary/50 p-2 rounded-lg w-fit">
+                          <IconTag size={14} className="text-brand-blue" />
+                          {item.category}
+                        </div>
+                      )}
+                      
+                      <p className="text-sm text-text-primary leading-relaxed border-l-2 border-border/30 pl-3">
+                        {item.review}
+                      </p>
                     </div>
                   </div>
                 ))

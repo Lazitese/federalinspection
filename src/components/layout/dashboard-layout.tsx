@@ -170,7 +170,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-[url('/noise.png')] bg-repeat opacity-100 relative">
+      <div className="flex-1 flex flex-col overflow-hidden opacity-100 relative">
         {/* Top Navigation Bar */}
         <header className="h-[88px] shrink-0 flex items-center justify-between px-10 relative z-20">
           <div></div>

@@ -34,7 +34,7 @@ function getResolutionTime(complaint: Complaint): string {
   return `${minutes} ደቂቃ`;
 }
 
-export function exportComplaintsToExcel(complaints: Complaint[], filename?: string) {
+export function exportComplaintsToExcel(complaints: Complaint[], filename?: string, reportTitle: string = 'ጥቆማ እና አቤቱታ', subtitle: string = '') {
   const headers = [
     'መለያ ቁጥር',
     'የክትትል ኮድ',
@@ -65,7 +65,9 @@ export function exportComplaintsToExcel(complaints: Complaint[], filename?: stri
   xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
   xml += '  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
   xml += '<Styles>\n';
-  xml += '  <Style ss:ID="header"><Font ss:Bold="1" ss:Size="11"/><Interior ss:Color="#014BAA" ss:Pattern="Solid"/><Font ss:Color="#FFFFFF" ss:Bold="1"/></Style>\n';
+  xml += '  <Style ss:ID="header"><Font ss:Bold="1" ss:Size="11"/><Interior ss:Color="#014BAA" ss:Pattern="Solid"/><Font ss:Color="#FFFFFF" ss:Bold="1"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>\n';
+  xml += '  <Style ss:ID="title"><Font ss:Bold="1" ss:Size="16" ss:Color="#014BAA"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>\n';
+  xml += '  <Style ss:ID="subtitle"><Font ss:Size="11" ss:Color="#666666"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>\n';
   xml += '  <Style ss:ID="date"><NumberFormat ss:Format="yyyy-mm-dd hh:mm"/></Style>\n';
   xml += '  <Style ss:ID="wrap"><Alignment ss:WrapText="1" ss:Vertical="Top"/></Style>\n';
   xml += '</Styles>\n';
@@ -78,8 +80,19 @@ export function exportComplaintsToExcel(complaints: Complaint[], filename?: stri
     xml += `<Column ss:Width="${w}"/>\n`;
   });
 
+  // Title Rows
+  xml += '<Row ss:Height="30">\n';
+  xml += `  <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="title"><Data ss:Type="String">${escapeXml(reportTitle)}</Data></Cell>\n`;
+  xml += '</Row>\n';
+  if (subtitle) {
+    xml += '<Row ss:Height="20">\n';
+    xml += `  <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="subtitle"><Data ss:Type="String">${escapeXml(subtitle)}</Data></Cell>\n`;
+    xml += '</Row>\n';
+  }
+  xml += '<Row ss:Height="10"></Row>\n'; // Spacer
+
   // Header row
-  xml += '<Row ss:StyleID="header">\n';
+  xml += '<Row ss:StyleID="header" ss:Height="25">\n';
   headers.forEach(h => {
     xml += `  <Cell><Data ss:Type="String">${escapeXml(h)}</Data></Cell>\n`;
   });

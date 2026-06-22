@@ -7,15 +7,12 @@ import {
   IconAlertTriangle,
   IconLoader2,
   IconX,
-  IconChevronRight,
-  IconGripVertical,
   IconDownload,
   IconEye,
   IconPlayerPlay,
   IconCheck,
   IconBan,
   IconHistory,
-  IconLayoutKanban,
   IconFileText,
   IconUpload,
   IconClock,
@@ -35,7 +32,7 @@ import { exportComplaintsToExcel, getResolutionTime } from "@/lib/exportExcel";
 import { useAdmin } from "@/lib/hooks/useAdmin";
 
 type TicketType = 'Complaint' | 'Suggestion';
-type ViewMode = 'kanban' | 'history';
+type StatusFilter = 'All' | ComplaintStatus;
 
 const STATUS_ORDER: ComplaintStatus[] = ['New', 'Processing', 'Resolved', 'Rejected'];
 
@@ -49,7 +46,7 @@ const STATUS_CONFIG: Record<ComplaintStatus, { label: string; color: string; bgC
 export default function ComplaintsPage() {
   const { profile } = useAdmin();
   const [activeTab, setActiveTab] = useState<TicketType>('Suggestion');
-  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+  const [activeStatusFilter, setActiveStatusFilter] = useState<StatusFilter>('All');
   const [tickets, setTickets] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,8 +56,15 @@ export default function ComplaintsPage() {
   const [resolutionMessage, setResolutionMessage] = useState('');
   const [resolutionFiles, setResolutionFiles] = useState<File[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
-  const [draggedTicketId, setDraggedTicketId] = useState<string | null>(null);
   const resFileRef = useRef<HTMLInputElement>(null);
+
+  // Export Modal State
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportTypes, setExportTypes] = useState<TicketType[]>(['Complaint', 'Suggestion']);
+  const [exportCategories, setExportCategories] = useState<ComplaintStatus[]>(['New', 'Processing', 'Resolved', 'Rejected']);
+  const [exportTimeframe, setExportTimeframe] = useState<'all' | '1m' | '3m' | '6m' | '1y' | 'custom'>('all');
+  const [exportStartDate, setExportStartDate] = useState('');
+  const [exportEndDate, setExportEndDate] = useState('');
 
   const loadTickets = useCallback(async () => {
     const data = await complaintService.getComplaints();
@@ -142,52 +146,55 @@ export default function ComplaintsPage() {
     setActionLoading(false);
   };
 
-  // Drag and Drop handlers
-  const handleDragStart = (ticketId: string) => {
-    setDraggedTicketId(ticketId);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = (e: React.DragEvent, targetStatus: ComplaintStatus) => {
-    e.preventDefault();
-    if (!draggedTicketId) return;
-
-    const ticket = tickets.find(t => t.id === draggedTicketId);
-    if (!ticket || ticket.status === targetStatus) {
-      setDraggedTicketId(null);
-      return;
-    }
-
-    // Validate transition
-    const currentIdx = STATUS_ORDER.indexOf(ticket.status);
-    const targetIdx = STATUS_ORDER.indexOf(targetStatus);
-    
-    // Only allow forward movement and specific transitions
-    if (
-      (ticket.status === 'New' && targetStatus === 'Processing') ||
-      (ticket.status === 'Processing' && (targetStatus === 'Resolved' || targetStatus === 'Rejected'))
-    ) {
-      handleStatusChange(draggedTicketId, targetStatus);
-    }
-
-    setDraggedTicketId(null);
-  };
-
   // Export
   const handleExport = () => {
-    const dataToExport = filteredTickets.length > 0 ? filteredTickets : typeTickets;
-    const typeName = activeTab === 'Suggestion' ? 'ጥቆማ' : 'አቤቱታ';
-    exportComplaintsToExcel(dataToExport, `${typeName}_${new Date().toISOString().split('T')[0]}.xls`);
+    setShowExportModal(true);
   };
 
-  // History data (resolved + rejected)
-  const historyTickets = filteredTickets
-    .filter(t => t.status === 'Resolved' || t.status === 'Rejected')
-    .sort((a, b) => new Date(b.resolvedAt || b.createdAt).getTime() - new Date(a.resolvedAt || a.createdAt).getTime());
+  const executeExport = () => {
+    let toExport = tickets.filter(t => exportTypes.includes(t.type) && exportCategories.includes(t.status));
+    
+    let subtitle = 'የተመረጡ: ';
+    const typesStr = exportTypes.map(t => t === 'Suggestion' ? 'ጥቆማ' : 'አቤቱታ').join(' እና ');
+    subtitle += typesStr + ' | ጊዜ: ';
+
+    if (exportTimeframe !== 'all') {
+      const now = new Date();
+      let start: Date | null = null;
+      let end: Date = now;
+      let timeStr = '';
+
+      if (exportTimeframe === '1m') { start = new Date(now.setMonth(now.getMonth() - 1)); timeStr = 'ያለፈው 1 ወር'; }
+      else if (exportTimeframe === '3m') { start = new Date(now.setMonth(now.getMonth() - 3)); timeStr = 'ያለፉት 3 ወራት'; }
+      else if (exportTimeframe === '6m') { start = new Date(now.setMonth(now.getMonth() - 6)); timeStr = 'ያለፉት 6 ወራት'; }
+      else if (exportTimeframe === '1y') { start = new Date(now.setFullYear(now.getFullYear() - 1)); timeStr = 'ያለፈው 1 ዓመት'; }
+      else if (exportTimeframe === 'custom' && exportStartDate && exportEndDate) {
+        start = new Date(exportStartDate);
+        end = new Date(exportEndDate);
+        end.setHours(23, 59, 59, 999);
+        timeStr = `${exportStartDate} እስከ ${exportEndDate}`;
+      }
+
+      subtitle += timeStr;
+
+      if (start) {
+        toExport = toExport.filter(t => {
+          const d = new Date(t.createdAt);
+          return d >= start! && d <= end;
+        });
+      }
+    } else {
+      subtitle += 'ሁሉም ጊዜ';
+    }
+
+    exportComplaintsToExcel(toExport, `ሪፖርት_${new Date().toISOString().split('T')[0]}.xls`, 'ጥቆማ እና አቤቱታ ሪፖርት', subtitle);
+    setShowExportModal(false);
+  };
+
+  // Table Data based on filter
+  const tableTickets = filteredTickets
+    .filter(t => activeStatusFilter === 'All' || t.status === activeStatusFilter)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
     <DashboardLayout>
@@ -255,40 +262,33 @@ export default function ComplaintsPage() {
               </span>
             </button>
           </div>
-
-          {/* View Toggle */}
-          <div className="flex items-center gap-1 bg-surface-primary/40 backdrop-blur-md p-1 rounded-xl border border-border/20">
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${viewMode === 'kanban' ? 'bg-surface-secondary text-text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'}`}
-            >
-              <IconLayoutKanban size={14} />
-              ካንባን
-            </button>
-            <button
-              onClick={() => setViewMode('history')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${viewMode === 'history' ? 'bg-surface-secondary text-text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'}`}
-            >
-              <IconHistory size={14} />
-              ታሪክ
-            </button>
-          </div>
         </div>
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
-            { label: 'ጠቅላላ', value: counts.total, color: 'text-text-primary' },
-            { label: 'አዲስ', value: counts.new, color: 'text-blue-600' },
-            { label: 'በሂደት ላይ', value: counts.processing, color: 'text-amber-600' },
-            { label: 'የተፈቱ', value: counts.resolved, color: 'text-green-600' },
-            { label: 'ውድቅ', value: counts.rejected, color: 'text-red-600' },
-          ].map(stat => (
-            <div key={stat.label} className="bg-surface-primary/30 rounded-2xl border border-border/20 p-4 backdrop-blur-md">
-              <div className={`text-2xl font-light ${stat.color} tabular-nums`}>{stat.value}</div>
-              <div className="text-xs text-text-muted mt-1">{stat.label}</div>
-            </div>
-          ))}
+            { id: 'All', label: 'ጠቅላላ', value: counts.total, color: 'text-text-primary', activeStyle: 'bg-surface-primary shadow-sm border-border/40' },
+            { id: 'New', label: 'አዲስ', value: counts.new, color: 'text-blue-600', activeStyle: 'bg-blue-50/80 dark:bg-blue-900/20 border-blue-200/50' },
+            { id: 'Processing', label: 'በሂደት ላይ', value: counts.processing, color: 'text-amber-600', activeStyle: 'bg-amber-50/80 dark:bg-amber-900/20 border-amber-200/50' },
+            { id: 'Resolved', label: 'የተፈቱ', value: counts.resolved, color: 'text-green-600', activeStyle: 'bg-green-50/80 dark:bg-green-900/20 border-green-200/50' },
+            { id: 'Rejected', label: 'ውድቅ', value: counts.rejected, color: 'text-red-600', activeStyle: 'bg-red-50/80 dark:bg-red-900/20 border-red-200/50' },
+          ].map(stat => {
+            const isActive = activeStatusFilter === stat.id;
+            return (
+              <button
+                key={stat.label}
+                onClick={() => setActiveStatusFilter(stat.id as StatusFilter)}
+                className={`text-left rounded-2xl border p-4 backdrop-blur-md transition-all duration-200 ${
+                  isActive 
+                    ? stat.activeStyle
+                    : 'bg-surface-primary/30 border-border/20 hover:bg-surface-primary/50 hover:border-border/30'
+                }`}
+              >
+                <div className={`text-2xl font-light ${stat.color} tabular-nums`}>{stat.value}</div>
+                <div className={`text-xs mt-1 ${isActive ? 'font-semibold text-text-primary' : 'text-text-muted'}`}>{stat.label}</div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Main Content */}
@@ -299,104 +299,90 @@ export default function ComplaintsPage() {
               <span className="text-sm text-text-muted">በመጫን ላይ...</span>
             </div>
           </div>
-        ) : viewMode === 'kanban' ? (
-          /* Kanban Board */
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 min-h-[400px]">
-            {STATUS_ORDER.map(status => {
-              const columnTickets = getColumnTickets(status);
-              const config = STATUS_CONFIG[status];
-              return (
-                <div
-                  key={status}
-                  className="flex flex-col gap-3"
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, status)}
-                >
-                  {/* Column Header */}
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${config.dotColor}`}></span>
-                      <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">{config.label}</h3>
-                    </div>
-                    <span className="w-6 h-6 rounded-full bg-surface-secondary flex items-center justify-center text-[10px] font-bold text-text-primary">
-                      {columnTickets.length}
-                    </span>
-                  </div>
-
-                  {/* Drop Zone */}
-                  <div className={`flex-1 rounded-2xl transition-all duration-200 ${draggedTicketId ? 'border-2 border-dashed border-border/40 bg-surface-primary/10 p-2' : ''}`}>
-                    {columnTickets.length === 0 && (
-                      <div className="border-2 border-dashed border-border/20 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 h-32 bg-surface-primary/20">
-                        {status === 'New' ? <IconAlertTriangle size={24} className="text-text-muted/30" /> : <IconLayoutKanban size={24} className="text-text-muted/30" />}
-                        <span className="text-xs text-text-muted font-medium">ምንም የለም</span>
-                      </div>
-                    )}
-                    <div className="space-y-3">
-                      {columnTickets.map(ticket => (
-                        <TicketCard
-                          key={ticket.id}
-                          ticket={ticket}
-                          activeTab={activeTab}
-                          onView={() => setSelectedTicket(ticket)}
-                          onStatusChange={(newStatus) => handleStatusChange(ticket.id, newStatus)}
-                          onDragStart={() => handleDragStart(ticket.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         ) : (
-          /* History Table View */
+          /* Unified Table View */
           <div className="bg-surface-primary/30 rounded-2xl border border-border/20 overflow-hidden backdrop-blur-md">
-            {historyTickets.length === 0 ? (
+            {tableTickets.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <IconHistory size={32} className="text-text-muted" stroke={1.5} />
-                <p className="text-sm text-text-muted">ምንም የተፈቱ ወይም ውድቅ ጉዳዮች የሉም</p>
+                <IconFileText size={32} className="text-text-muted/50" stroke={1.5} />
+                <p className="text-sm text-text-muted">ምንም የተገኘ መረጃ የለም</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border/20">
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">መለያ</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">ርዕስ</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">አቅራቢ</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">ሁኔታ</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">ቀን</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">ለመፍታት የፈጀ</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider"></th>
+                    <tr className="border-b border-border/20 bg-surface-primary/40">
+                      <th className="text-left px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">መለያ</th>
+                      <th className="text-left px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">ርዕስ / ማብራሪያ</th>
+                      <th className="text-left px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">አቅራቢ</th>
+                      <th className="text-left px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">ሁኔታ</th>
+                      <th className="text-left px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">ቀን</th>
+                      <th className="text-right px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">ድርጊት</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {historyTickets.map(ticket => (
-                      <tr key={ticket.id} className="border-b border-border/10 hover:bg-surface-primary/50 transition-colors">
-                        <td className="px-4 py-3">
-                          <span className="text-xs font-mono text-brand-blue">#{ticket.trackingCode?.split('-').pop() || ticket.id.split('-')[0]}</span>
+                    {tableTickets.map(ticket => (
+                      <tr key={ticket.id} className="border-b border-border/10 hover:bg-surface-primary/60 transition-colors group">
+                        <td className="px-4 py-4 align-middle">
+                          <span className="text-xs font-mono font-medium text-brand-blue bg-brand-blue/5 px-2 py-1 rounded-md">
+                            #{ticket.trackingCode?.split('-').pop() || ticket.id.split('-')[0]}
+                          </span>
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-text-primary font-medium line-clamp-1">{ticket.message.substring(0, 60)}...</span>
+                        <td className="px-4 py-4 align-middle max-w-[300px]">
+                          <p className="text-sm text-text-primary font-medium line-clamp-2 leading-snug">{ticket.message}</p>
                         </td>
-                        <td className="px-4 py-3 text-text-secondary">{ticket.name}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4 align-middle">
+                          <div className="flex flex-col">
+                            <span className="text-sm text-text-secondary font-medium">{ticket.name}</span>
+                            {ticket.phone && <span className="text-[10px] text-text-muted mt-0.5">{ticket.phone}</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 align-middle">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${STATUS_CONFIG[ticket.status].bgColor} ${STATUS_CONFIG[ticket.status].color}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${STATUS_CONFIG[ticket.status].dotColor}`}></span>
                             {STATUS_CONFIG[ticket.status].label}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-text-muted text-xs">{ticket.date}</td>
-                        <td className="px-4 py-3">
-                          <span className="text-xs text-text-secondary font-medium">{getResolutionTime(ticket)}</span>
+                        <td className="px-4 py-4 align-middle">
+                          <div className="flex flex-col">
+                            <span className="text-xs text-text-secondary">{ticket.date}</span>
+                            {(ticket.status === 'Resolved' || ticket.status === 'Rejected') && ticket.resolvedAt && (
+                              <span className="text-[10px] text-text-muted mt-0.5 flex items-center gap-1">
+                                <IconClock size={10} /> {getResolutionTime(ticket)}
+                              </span>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() => setSelectedTicket(ticket)}
-                            className="p-1.5 rounded-lg hover:bg-brand-blue/10 text-text-muted hover:text-brand-blue transition-colors"
-                          >
-                            <IconEye size={16} />
-                          </button>
+                        <td className="px-4 py-4 align-middle text-right">
+                          <div className="flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => setSelectedTicket(ticket)}
+                              className="p-1.5 rounded-lg bg-surface-secondary/50 hover:bg-brand-blue hover:text-white text-text-secondary transition-all"
+                              title="ዝርዝር ይመልከቱ"
+                            >
+                              <IconEye size={16} />
+                            </button>
+                            {ticket.status === 'New' && (
+                              <button
+                                onClick={() => handleStatusChange(ticket.id, 'Processing')}
+                                disabled={actionLoading}
+                                className="p-1.5 rounded-lg bg-surface-secondary/50 hover:bg-amber-500 hover:text-white text-text-secondary transition-all disabled:opacity-50"
+                                title="ወደ ሂደት ውሰድ"
+                              >
+                                <IconPlayerPlay size={16} />
+                              </button>
+                            )}
+                            {ticket.status === 'Processing' && (
+                              <button
+                                onClick={() => handleStatusChange(ticket.id, 'Resolved')}
+                                disabled={actionLoading}
+                                className="p-1.5 rounded-lg bg-surface-secondary/50 hover:bg-green-600 hover:text-white text-text-secondary transition-all disabled:opacity-50"
+                                title="መፍትሄ ስጥ / ውድቅ አድርግ"
+                              >
+                                <IconCheck size={16} />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -710,6 +696,124 @@ export default function ComplaintsPage() {
           </div>
         </div>
       )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowExportModal(false)}>
+          <div className="bg-surface-primary rounded-2xl border border-border/30 p-6 max-w-lg w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-semibold text-text-primary">
+                ወደ ኤክስፖርት (Excel)
+              </h3>
+              <button onClick={() => setShowExportModal(false)} className="p-1.5 hover:bg-surface-secondary rounded-xl transition-colors">
+                <IconX size={20} className="text-text-muted" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Types Filter */}
+              <div>
+                <label className="text-sm font-medium text-text-primary mb-3 block">የመረጃ ዓይነት *</label>
+                <div className="flex flex-wrap gap-3">
+                  {(['Suggestion', 'Complaint'] as TicketType[]).map(type => (
+                    <label key={type} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={exportTypes.includes(type)}
+                        onChange={(e) => {
+                          if (e.target.checked) setExportTypes([...exportTypes, type]);
+                          else setExportTypes(exportTypes.filter(t => t !== type));
+                        }}
+                        className="w-4 h-4 rounded border-border/50 text-brand-blue focus:ring-brand-blue/30"
+                      />
+                      <span className="text-sm text-text-secondary">{type === 'Suggestion' ? 'ጥቆማ' : 'አቤቱታ'}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <label className="text-sm font-medium text-text-primary mb-3 block">የሂደት ሁኔታ *</label>
+                <div className="flex flex-wrap gap-3">
+                  {STATUS_ORDER.map(status => (
+                    <label key={status} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={exportCategories.includes(status)}
+                        onChange={(e) => {
+                          if (e.target.checked) setExportCategories([...exportCategories, status]);
+                          else setExportCategories(exportCategories.filter(s => s !== status));
+                        }}
+                        className="w-4 h-4 rounded border-border/50 text-brand-blue focus:ring-brand-blue/30"
+                      />
+                      <span className="text-sm text-text-secondary">{STATUS_CONFIG[status].label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Timeframe Filter */}
+              <div>
+                <label className="text-sm font-medium text-text-primary mb-3 block">የጊዜ ገደብ *</label>
+                <select
+                  value={exportTimeframe}
+                  onChange={(e) => setExportTimeframe(e.target.value as any)}
+                  className="w-full bg-surface-secondary/30 border border-border/50 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors"
+                >
+                  <option value="all">ሁሉም ጊዜ</option>
+                  <option value="1m">ያለፈው 1 ወር</option>
+                  <option value="3m">ያለፉት 3 ወራት</option>
+                  <option value="6m">ያለፉት 6 ወራት</option>
+                  <option value="1y">ያለፈው 1 ዓመት</option>
+                  <option value="custom">በመረጡት ጊዜ</option>
+                </select>
+              </div>
+
+              {/* Custom Date Range */}
+              {exportTimeframe === 'custom' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-text-secondary mb-1.5 block">መነሻ ቀን</label>
+                    <input
+                      type="date"
+                      value={exportStartDate}
+                      onChange={(e) => setExportStartDate(e.target.value)}
+                      className="w-full bg-surface-secondary/30 border border-border/50 rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-text-secondary mb-1.5 block">መድረሻ ቀን</label>
+                    <input
+                      type="date"
+                      value={exportEndDate}
+                      onChange={(e) => setExportEndDate(e.target.value)}
+                      className="w-full bg-surface-secondary/30 border border-border/50 rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="flex-1 py-2.5 px-4 bg-surface-secondary hover:bg-surface-secondary/80 text-text-primary rounded-xl text-sm font-medium transition-colors border border-border/50"
+              >
+                ሰርዝ
+              </button>
+              <button
+                onClick={executeExport}
+                disabled={exportTypes.length === 0 || exportCategories.length === 0 || (exportTimeframe === 'custom' && (!exportStartDate || !exportEndDate))}
+                className="flex-1 py-2.5 px-4 bg-brand-blue hover:bg-brand-blue/90 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <IconDownload size={18} />
+                ኤክስፖርት አድርግ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
@@ -728,88 +832,4 @@ function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value
   );
 }
 
-function TicketCard({
-  ticket,
-  activeTab,
-  onView,
-  onStatusChange,
-  onDragStart,
-}: {
-  ticket: Complaint;
-  activeTab: TicketType;
-  onView: () => void;
-  onStatusChange: (status: ComplaintStatus) => void;
-  onDragStart: () => void;
-}) {
-  const [showMenu, setShowMenu] = useState(false);
-  const accentColor = activeTab === 'Suggestion' ? 'brand-blue' : 'brand-yellow';
 
-  const nextAction = ticket.status === 'New'
-    ? { label: 'ወደ ሂደት ውሰድ', status: 'Processing' as ComplaintStatus, icon: IconPlayerPlay }
-    : ticket.status === 'Processing'
-    ? { label: 'ፍታው / ውድቅ', status: null, icon: IconCheck }
-    : null;
-
-  return (
-    <div
-      draggable
-      onDragStart={onDragStart}
-      className="bg-surface-primary/40 border border-border/20 rounded-2xl p-4 backdrop-blur-sm hover:bg-surface-primary/60 transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col gap-2.5 group hover:border-border/40 hover:shadow-sm"
-    >
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-2">
-          <IconGripVertical size={14} className="text-text-muted/40 group-hover:text-text-muted transition-colors" />
-          <span className={`text-[11px] font-mono font-medium text-${accentColor}`}>
-            #{ticket.trackingCode?.split('-').pop() || ticket.id.split('-')[0]}
-          </span>
-        </div>
-        <span className="text-[10px] text-text-muted">{ticket.date}</span>
-      </div>
-
-      <div className="pl-5">
-        <p className="text-sm text-text-primary font-medium line-clamp-2 leading-snug">{ticket.message.substring(0, 80)}{ticket.message.length > 80 ? '...' : ''}</p>
-      </div>
-
-      <div className="flex items-center justify-between pl-5 pt-2 border-t border-border/10">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-medium text-text-secondary">{ticket.name}</span>
-          {ticket.attachments && ticket.attachments.length > 0 && (
-            <span className="flex items-center gap-0.5 text-[10px] text-text-muted">
-              <IconPaperclip size={10} />
-              {ticket.attachments.length}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={(e) => { e.stopPropagation(); onView(); }}
-            className="p-1.5 rounded-lg hover:bg-brand-blue/10 text-text-muted hover:text-brand-blue transition-colors"
-            title="ዝርዝር ይመልከቱ"
-          >
-            <IconEye size={14} />
-          </button>
-          {nextAction && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (nextAction.status) {
-                  onStatusChange(nextAction.status);
-                } else {
-                  onView();
-                }
-              }}
-              className={`p-1.5 rounded-lg transition-colors ${
-                ticket.status === 'New'
-                  ? 'hover:bg-amber-500/10 text-text-muted hover:text-amber-600'
-                  : 'hover:bg-green-500/10 text-text-muted hover:text-green-600'
-              }`}
-              title={nextAction.label}
-            >
-              <nextAction.icon size={14} />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
