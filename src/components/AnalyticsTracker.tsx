@@ -8,8 +8,8 @@ function Tracker() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Exclude admin dashboard activity from analytics
-    if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
+    // Exclude admin dashboard and authentication pages from analytics
+    if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin') || pathname.startsWith('/auth') || pathname.startsWith('/login')) {
       return;
     }
 
