@@ -32,7 +32,7 @@ export const ALL_MODULES = [
   { id: 'settings', label: 'Settings', labelAm: 'ቅንብሮች' },
 ] as const;
 
-export type AccessLevel = 'all' | 'specific';
+export type AccessLevel = 'all' | 'specific' | 'group';
 
 export interface Admin {
   id: string;
@@ -56,6 +56,7 @@ export interface NewsArticle {
   author: string;
   created: string;
   published: string;
+  article_type?: 'News' | 'Message';
   body?: string;
   content?: string;
   image?: string;
@@ -89,6 +90,7 @@ export interface Document {
   files: DocumentFile[];
   uploadDate: string;
   uploadedBy: string;
+  is_public?: boolean;
 }
 
 // @BACKEND: Commission hierarchy positions — both Amharic and English names.
@@ -120,7 +122,13 @@ export interface Personnel {
   phone: string;
   photo?: string;
   message?: string;
-  status: 'Active' | 'Inactive';
+  facebook_url?: string;
+  x_url?: string;
+  linkedin_url?: string;
+  whatsapp_url?: string;
+  archived_at?: string;
+  status: 'Active' | 'Inactive' | 'Archived';
+  region?: string;
 }
 
 export interface ComplaintAttachment {
@@ -166,6 +174,22 @@ export interface Complaint {
   resolvedBy?: string;
   status: ComplaintStatus;
   resolution?: ComplaintResolution;
+  groupMembers?: string[];
+  assignedCommittee?: string;
+  serviceName?: string;
+  resolutionRating?: number;
+  resolutionFeedback?: string;
+}
+
+export interface Feedback {
+  id: string;
+  category: string;
+  rating: string;
+  review: string;
+  sentiment: string;
+  region?: string;
+  sector?: string;
+  created_at: string;
 }
 
 export interface QrCode {

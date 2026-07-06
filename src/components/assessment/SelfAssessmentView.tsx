@@ -138,25 +138,29 @@ export function SelfAssessmentView({ periodId, existingData, readOnly = false }:
                       </span>
                     </div>
                     
-                    <div className="flex flex-col">
-                      <div className="flex justify-between w-full px-2 mb-2 text-xs text-text-muted font-medium">
-                        <span>1 (ደካማ)</span>
-                        <span>5 (ጥሩ)</span>
-                      </div>
-                      <div className="flex gap-2 sm:gap-3">
+                    <div className="flex flex-col mt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 sm:gap-3">
                         {[1, 2, 3, 4, 5].map((score) => {
                           const isSelected = responses[q.question_id] === score;
+                          const labels: Record<number, string> = {
+                            1: 'በጣም ዝቅተኛ (Very Low)',
+                            2: 'ዝቅተኛ (Low)',
+                            3: 'መካከለኛ (Medium)',
+                            4: 'ከፍተኛ (High)',
+                            5: 'በጣም ከፍተኛ (Very High)'
+                          };
                           return (
                             <button
                               key={score}
                               onClick={() => handleScoreChange(q.question_id, score)}
-                              className={`flex-1 relative h-12 rounded-xl text-base font-semibold transition-all duration-200 transform ${
+                              className={`flex flex-col items-center justify-center p-2 sm:py-3 rounded-xl border transition-all duration-200 ${
                                 isSelected
-                                  ? 'bg-brand-blue text-white shadow-lg scale-105 ring-2 ring-brand-blue ring-offset-2 ring-offset-background'
-                                  : 'bg-surface-secondary text-text-secondary border border-border/60'
+                                  ? 'bg-brand-blue text-white shadow-md border-brand-blue scale-105 z-10'
+                                  : 'bg-surface-secondary text-text-secondary border-border/60'
                               } ${!readOnly && !isSelected ? 'hover:bg-border/80 hover:text-text-primary' : ''} ${readOnly ? 'cursor-default' : ''}`}
                             >
-                              {score}
+                              <span className="text-lg font-bold mb-1">{score}</span>
+                              <span className="text-[10px] sm:text-xs leading-tight text-center font-medium opacity-90">{labels[score]}</span>
                             </button>
                           );
                         })}

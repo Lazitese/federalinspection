@@ -1,7 +1,15 @@
-CREATE OR REPLACE FUNCTION get_analytics_summary(start_date timestamptz, end_date timestamptz)
-RETURNS json
-LANGUAGE plpgsql
-AS $$
+alter table "public"."documents" add column "is_public" boolean default true;
+
+alter table "public"."page_views" add column "city" text;
+
+alter table "public"."page_views" add column "country_code" text;
+
+set check_function_bodies = off;
+
+CREATE OR REPLACE FUNCTION public.get_analytics_summary(start_date timestamp with time zone, end_date timestamp with time zone)
+ RETURNS json
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
     result json;
     time_series_data json;
@@ -178,13 +186,13 @@ BEGIN
     ) t;
 
     -- Locations
-    SELECT COALESCE(json_agg(json_build_object('country', country, 'views', views)), '[]'::json)
+    SELECT COALESCE(json_agg(json_build_object('country', country, 'country_code', country_code, 'city', city, 'views', views)), '[]'::json)
     INTO locations_data
     FROM (
-        SELECT country, COUNT(*) as views
+        SELECT country, country_code, city, COUNT(*) as views
         FROM page_views
         WHERE timestamp BETWEEN start_date AND end_date
-        GROUP BY country
+        GROUP BY country, country_code, city
         ORDER BY views DESC LIMIT 10
     ) t;
 
@@ -205,4 +213,7 @@ BEGIN
 
     RETURN result;
 END;
-$$;
+$function$
+;
+
+

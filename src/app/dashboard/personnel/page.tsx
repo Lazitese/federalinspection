@@ -1,7 +1,7 @@
 'use client';
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { IconUserPlus, IconSearch, IconFilter, IconBuilding, IconEdit, IconTrash, IconCamera } from "@tabler/icons-react";
+import { IconUserPlus, IconSearch, IconFilter, IconBuilding, IconEdit, IconTrash, IconCamera, IconArchive, IconArrowLeft } from "@tabler/icons-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { personnelService } from "@/services/personnel";
@@ -12,6 +12,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 export default function PersonnelPage() {
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     idToDelete: string | null;
@@ -45,8 +46,12 @@ export default function PersonnelPage() {
     }
   };
 
-  const mainOffice = personnel.filter(p => p.officeCategory === 'Main Office' || p.officeCategoryAm === 'ኮሚሽን ጽ/ቤት');
-  const branchOffices = personnel.filter(p => p.officeCategory !== 'Main Office' && p.officeCategoryAm !== 'ኮሚሽን ጽ/ቤት');
+  const activePersonnel = personnel.filter(p => p.status !== 'Archived');
+  const archivedPersonnel = personnel.filter(p => p.status === 'Archived');
+
+  const mainOffice = activePersonnel.filter(p => p.officeCategory === 'Main Office' || p.officeCategoryAm === 'ኮሚሽን ጽ/ቤት' || p.officeCategoryAm === 'ኮሚሽን ዋና ጽ/ቤት');
+  const branchOffices = activePersonnel.filter(p => p.officeCategory === 'Branch Office' || p.officeCategoryAm === 'ኮሚሽን ቅርንጫፍ ጽ/ቤት');
+  const commissionMembers = activePersonnel.filter(p => p.officeCategory === 'Commission Members' || p.officeCategoryAm === 'ኮሚሽን አባላት');
 
   const PersonnelCard = ({ person }: { person: Personnel }) => (
     <div className="bg-surface-primary/50 border border-border/30 rounded-2xl p-6 flex flex-col gap-4 hover:border-brand-blue/30 transition-colors shadow-sm relative group">
@@ -94,10 +99,16 @@ export default function PersonnelPage() {
         </div>
         <div className="flex justify-between items-center mt-1">
           <span className="text-text-muted">ሁኔታ:</span>
-          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${person.status === 'Active' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-            {person.status === 'Active' ? 'ገቢር' : person.status}
+          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${person.status === 'Active' ? 'bg-success/10 text-success' : person.status === 'Archived' ? 'bg-slate-100 text-slate-500' : 'bg-warning/10 text-warning'}`}>
+            {person.status === 'Active' ? 'ገቢር' : person.status === 'Archived' ? 'መዝገብ (Archived)' : person.status}
           </span>
         </div>
+        {person.status === 'Archived' && person.archived_at && (
+          <div className="flex justify-between mt-1">
+            <span className="text-text-muted">የተመዘገበበት ቀን:</span>
+            <span className="font-medium text-text-primary text-[10px]">{new Date(person.archived_at).toLocaleDateString()}</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -118,6 +129,17 @@ export default function PersonnelPage() {
             <button className="flex items-center justify-center p-2.5 rounded-full border border-border/30 text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors backdrop-blur-sm">
               <IconFilter size={18} />
             </button>
+            {activeTab === 'active' ? (
+              <button onClick={() => setActiveTab('archived')} className="flex items-center gap-2 bg-surface-primary hover:bg-surface-secondary text-text-secondary border border-border/30 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm">
+                <IconArchive size={18} />
+                መዝገብ
+              </button>
+            ) : (
+              <button onClick={() => setActiveTab('active')} className="flex items-center gap-2 bg-surface-primary hover:bg-surface-secondary text-text-secondary border border-border/30 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm">
+                <IconArrowLeft size={18} />
+                ተመለስ
+              </button>
+            )}
             <Link href="/dashboard/personnel/create" className="flex items-center gap-2 bg-brand-blue hover:bg-brand-blue/90 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm">
               <IconUserPlus size={18} />
               አዲስ አባል
@@ -127,13 +149,13 @@ export default function PersonnelPage() {
         
         {loading ? (
           <div className="flex items-center justify-center h-48 text-text-muted text-sm">በማምጣት ላይ...</div>
-        ) : (
+        ) : activeTab === 'active' ? (
           <div className="flex flex-col gap-8">
             {/* Main Office Group */}
             <div className="bg-surface-primary/30 rounded-[2rem] border border-border/20 p-8 backdrop-blur-md flex flex-col gap-6">
               <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest flex items-center gap-2">
                 <IconBuilding size={16} />
-                ኮሚሽን ጽ/ቤት (Main Office)
+                ኮሚሽን ዋና ጽ/ቤት (Main Office)
               </h2>
               <div className="w-full h-[1px] bg-border/20"></div>
               {mainOffice.length === 0 ? (
@@ -157,6 +179,39 @@ export default function PersonnelPage() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {branchOffices.map(p => <PersonnelCard key={p.id} person={p} />)}
+                </div>
+              )}
+            </div>
+            
+            {/* Commission Members Group */}
+            <div className="bg-surface-primary/30 rounded-[2rem] border border-border/20 p-8 backdrop-blur-md flex flex-col gap-6">
+              <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest flex items-center gap-2">
+                <IconBuilding size={16} />
+                ኮሚሽን አባላት (Commission Members)
+              </h2>
+              <div className="w-full h-[1px] bg-border/20"></div>
+              {commissionMembers.length === 0 ? (
+                <div className="text-sm text-text-muted py-8 text-center">ምንም መረጃ አልተገኘም</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {commissionMembers.map(p => <PersonnelCard key={p.id} person={p} />)}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-8">
+            <div className="bg-surface-primary/30 rounded-[2rem] border border-border/20 p-8 backdrop-blur-md flex flex-col gap-6">
+              <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest flex items-center gap-2">
+                <IconBuilding size={16} />
+                የቀድሞ አመራሮች (Archived Leaders)
+              </h2>
+              <div className="w-full h-[1px] bg-border/20"></div>
+              {archivedPersonnel.length === 0 ? (
+                <div className="text-sm text-text-muted py-8 text-center">ምንም መዝገብ አልተገኘም</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {archivedPersonnel.map(p => <PersonnelCard key={p.id} person={p} />)}
                 </div>
               )}
             </div>

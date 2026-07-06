@@ -54,7 +54,18 @@ function RequestAccessForm() {
         filter: `id=eq.${requestId}` 
       }, (payload) => {
         const newStatus = payload.new.status;
-        if (newStatus === 'Approved') setStatus('approved');
+        if (newStatus === 'Approved') {
+          setStatus('approved');
+          try {
+            const savedAccess = JSON.parse(localStorage.getItem('approvedAccess') || '[]');
+            if (!savedAccess.find((a: any) => a.requestId === requestId)) {
+              savedAccess.push({ requestId, target, targetType, date: new Date().toISOString() });
+              localStorage.setItem('approvedAccess', JSON.stringify(savedAccess));
+            }
+          } catch (e) {
+            console.error('Error saving access:', e);
+          }
+        }
         if (newStatus === 'Denied') setStatus('denied');
       })
       .subscribe();
@@ -74,34 +85,49 @@ function RequestAccessForm() {
     if (!target) return;
     setFetchingFiles(true);
     try {
-      const { data: docs, error: docsError } = await supabase.from('documents').select('*');
-      if (docsError) throw docsError;
-
-      const codePart = target.split(' - ')[0];
-      let mainCode = '';
-      let subCode = '';
-      
-      if (targetType === 'main') {
-        mainCode = codePart;
-      } else if (targetType === 'sub') {
-        const parts = codePart.split('.');
-        mainCode = parts[0];
-        subCode = parts[1];
-      }
-
-      const filesList: {doc: any, file: any}[] = [];
-      docs.forEach(doc => {
-        let match = false;
-        if (targetType === 'main' && doc.main_category === mainCode) match = true;
-        if (targetType === 'sub' && doc.main_category === mainCode && doc.sub_category === subCode) match = true;
+      if (targetType === 'confidential') {
+        const { data: files, error: filesError } = await supabase
+          .from('public_files')
+          .select('*')
+          .eq('category', target);
         
-        if (match && doc.files) {
-          doc.files.forEach((f: any) => {
-            filesList.push({doc, file: f});
-          });
+        if (filesError) throw filesError;
+        
+        const filesList = files.map(f => ({
+          doc: { isConfidential: true }, 
+          file: { id: f.id, name: f.file_name, file_url: f.file_url }
+        }));
+        setCategoryFiles(filesList);
+      } else {
+        const { data: docs, error: docsError } = await supabase.from('documents').select('*');
+        if (docsError) throw docsError;
+
+        const codePart = target.split(' - ')[0];
+        let mainCode = '';
+        let subCode = '';
+        
+        if (targetType === 'main') {
+          mainCode = codePart;
+        } else if (targetType === 'sub') {
+          const parts = codePart.split('.');
+          mainCode = parts[0];
+          subCode = parts[1];
         }
-      });
-      setCategoryFiles(filesList);
+
+        const filesList: {doc: any, file: any}[] = [];
+        docs.forEach(doc => {
+          let match = false;
+          if (targetType === 'main' && doc.main_category === mainCode) match = true;
+          if (targetType === 'sub' && doc.main_category === mainCode && doc.sub_category === subCode) match = true;
+          
+          if (match && doc.files) {
+            doc.files.forEach((f: any) => {
+              filesList.push({doc, file: f});
+            });
+          }
+        });
+        setCategoryFiles(filesList);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -111,11 +137,19 @@ function RequestAccessForm() {
 
   const downloadFile = async (doc: any, file: any) => {
     try {
-      const storagePath = `${doc.office}/${doc.year}/${file.id}`;
-      const { data, error } = await supabase.storage.from('documents').createSignedUrl(storagePath, 60);
-      if (error) throw error;
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank');
+      if (doc.isConfidential) {
+        if (!requestId) {
+          alert('መዳረሻ አልተፈቀደም (Access not granted)');
+          return;
+        }
+        window.open(`/api/confidential-download?fileId=${file.id}&requestId=${requestId}`, '_blank');
+      } else {
+        const storagePath = `${doc.office}/${doc.year}/${file.id}`;
+        const { data, error } = await supabase.storage.from('documents').createSignedUrl(storagePath, 60);
+        if (error) throw error;
+        if (data?.signedUrl) {
+          window.open(data.signedUrl, '_blank');
+        }
       }
     } catch (err) {
       console.error(err);

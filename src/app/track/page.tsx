@@ -8,6 +8,7 @@ import { Search, Clock, CheckCircle2, XCircle, Loader2, ArrowRight, FileText, Do
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import Link from "next/link";
+import { Star } from "lucide-react";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
   New: {
@@ -44,6 +45,13 @@ function TrackingContent() {
   const [complaint, setComplaint] = useState<Complaint | null>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  
+  // Review form state
+  const [rating, setRating] = useState<number>(0);
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  const [feedback, setFeedback] = useState<string>('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   useEffect(() => {
     if (initialCode) {
@@ -61,7 +69,28 @@ function TrackingContent() {
 
     const result = await complaintService.getComplaintByTrackingCode(trackingCode);
     setComplaint(result);
+    if (result && result.resolutionRating) {
+      setRating(result.resolutionRating);
+      setFeedback(result.resolutionFeedback || '');
+      setReviewSubmitted(true);
+    } else {
+      setRating(0);
+      setFeedback('');
+      setReviewSubmitted(false);
+    }
     setLoading(false);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!complaint || rating === 0) return;
+    setSubmittingReview(true);
+    const success = await complaintService.submitResolutionReview(complaint.id, rating, feedback);
+    if (success) {
+      setReviewSubmitted(true);
+      const result = await complaintService.getComplaintByTrackingCode(complaint.trackingCode);
+      setComplaint(result);
+    }
+    setSubmittingReview(false);
   };
 
   const statusConfig = complaint ? STATUS_CONFIG[complaint.status] : null;
@@ -206,6 +235,62 @@ function TrackingContent() {
                   ))}
                 </div>
               )}
+              
+              {/* Review Section */}
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <h3 className="text-sm font-semibold text-slate-800 mb-4">
+                  {reviewSubmitted ? 'የሰጡት አስተያየት እና ደረጃ' : 'የአገልግሎት እርካታዎን ይግለጹ'}
+                </h3>
+                
+                {reviewSubmitted ? (
+                  <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                    <div className="flex items-center gap-1 mb-3">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star 
+                          key={star} 
+                          className={`size-5 ${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} 
+                        />
+                      ))}
+                    </div>
+                    {feedback && (
+                      <p className="text-sm text-slate-700 italic">"{feedback}"</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-slate-600 mb-2">ለተሰጠዎት መፍትሄ ያለዎትን እርካታ ከ1 እስከ 5 ኮከብ ይስጡን።</p>
+                    <div className="flex items-center gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => setRating(star)}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          className="p-1 focus:outline-none transition-transform hover:scale-110"
+                        >
+                          <Star 
+                            className={`size-8 ${(hoverRating || rating) >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} 
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
+                      placeholder="ተጨማሪ አስተያየት ካለዎት እዚህ ይጻፉ (አማራጭ)..."
+                      className="w-full rounded-xl border border-slate-200 p-4 text-sm focus:border-[#014BAA] focus:ring-[#014BAA] focus:bg-white bg-slate-50 transition-colors"
+                      rows={3}
+                    />
+                    <button
+                      onClick={handleSubmitReview}
+                      disabled={submittingReview || rating === 0}
+                      className="bg-[#014BAA] hover:bg-[#014BAA]/90 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {submittingReview ? <Loader2 className="size-5 animate-spin" /> : 'አስተያየት ላክ'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -221,6 +306,18 @@ function TrackingContent() {
                 <p className="text-slate-500 text-xs mb-0.5">ተቋም</p>
                 <p className="font-medium text-slate-800">{complaint.institution || '-'}</p>
               </div>
+              {complaint.serviceName && (
+                <div>
+                  <p className="text-slate-500 text-xs mb-0.5">አገልግሎት</p>
+                  <p className="font-medium text-slate-800">{complaint.serviceName}</p>
+                </div>
+              )}
+              {complaint.assignedCommittee && (
+                <div>
+                  <p className="text-slate-500 text-xs mb-0.5">የተመደበለት ኮሚቴ</p>
+                  <p className="font-medium text-slate-800">{complaint.assignedCommittee}</p>
+                </div>
+              )}
             </div>
             <div className="mt-4 pt-4 border-t border-slate-100">
               <p className="text-slate-500 text-xs mb-1">ዝርዝር</p>

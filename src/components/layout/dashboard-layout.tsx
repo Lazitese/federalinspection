@@ -5,7 +5,7 @@ import { useI18n } from '@/lib/i18n';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { IconDashboard, IconNews, IconFileText, IconUsers, IconMessage2, IconSettings, IconSun, IconMoon, IconClipboardCheck, IconQrcode, IconChartBar, IconMessageStar, IconLogout, IconShieldCheck, IconChartDots, IconFileDescription, IconMenu2, IconX } from '@tabler/icons-react';
+import { IconDashboard, IconNews, IconFileText, IconUsers, IconMessage2, IconSettings, IconSun, IconMoon, IconClipboardCheck, IconChartBar, IconMessageStar, IconLogout, IconShieldCheck, IconChartDots, IconFileDescription, IconMenu2, IconX } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { useAdmin } from '@/lib/hooks/useAdmin';
@@ -64,8 +64,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     { label: 'ዳሽቦርድ', icon: IconDashboard, href: '/dashboard' },
     { label: 'ዜና', icon: IconNews, href: '/dashboard/news', id: 'news' },
     { label: 'ሰነዶች', icon: IconFileText, href: '/dashboard/documents', id: 'documents' },
-    { label: 'የህዝብ ፋይሎች', icon: IconFileText, href: '/dashboard/files', id: 'public-files' },
-    { label: 'QR መዳረሻ', icon: IconQrcode, href: '/dashboard/qr-access', id: 'qr-access' },
     { label: 'የአመራር አካላት', icon: IconUsers, href: '/dashboard/personnel', id: 'personnel' },
     { label: 'ጥቆማ እና አቤቱታ', icon: IconMessage2, href: '/dashboard/complaints', id: 'complaints' },
     { label: 'ምዘና', icon: IconClipboardCheck, href: '/dashboard/assessment', id: 'assessment' },

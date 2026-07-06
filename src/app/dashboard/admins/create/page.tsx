@@ -44,23 +44,13 @@ export default function CreateAdminPage() {
       email: '',
       phone: '',
       accessLevel: 'specific',
-      groups: [],
       modules: [],
       status: 'Active',
     },
   });
 
   const accessLevel = watch('accessLevel');
-  const selectedGroups = watch('groups') || [];
   const selectedModules = watch('modules') || [];
-
-  const toggleGroup = (groupId: string) => {
-    const current = [...selectedGroups];
-    const idx = current.indexOf(groupId);
-    if (idx > -1) { current.splice(idx, 1); }
-    else { current.push(groupId); }
-    setValue('groups', current, { shouldValidate: true });
-  };
 
   const toggleModule = (moduleId: string) => {
     const current = [...selectedModules];
@@ -72,8 +62,8 @@ export default function CreateAdminPage() {
 
   const onSubmit = async (data: AdminFormValues) => {
     try {
-      if (data.accessLevel === 'all') { data.groups = []; data.modules = []; }
-      else if (data.accessLevel === 'group') { data.modules = []; }
+      if (data.accessLevel === 'all') { data.modules = []; }
+      else if (data.accessLevel === 'specific') { /* specific modules kept */ }
       
       const res = await provisionAdmin(data);
       if (!res.success) {

@@ -88,9 +88,11 @@ export function UserProfileDrawer({ isOpen, onClose, userId, periodId }: UserPro
         
         // Setup Form Data
         const p = user?.user_profiles?.[0] || {};
+        const currentRole = historyData.find(h => h.periodId === periodId)?.role || 'regular';
         setFormData({
           full_name: user?.full_name || '',
           phone_number: user?.phone_number || '',
+          role: currentRole,
           gender: p.gender || '',
           age: p.age || '',
           education_level: p.education_level || '',
@@ -218,6 +220,12 @@ export function UserProfileDrawer({ isOpen, onClose, userId, periodId }: UserPro
       };
 
       await supabase.from('user_profiles').upsert(profilePayload);
+
+      // 3. Update period role
+      if (formData.role) {
+        await supabase.from('period_members').update({ role: formData.role }).eq('user_id', userId).eq('period_id', periodId);
+        setHistory(prev => prev.map(h => h.periodId === periodId ? { ...h, role: formData.role } : h));
+      }
 
       // Update local state to reflect changes without full reload
       setProfileData({
@@ -394,6 +402,7 @@ export function UserProfileDrawer({ isOpen, onClose, userId, periodId }: UserPro
                   
                   {/* Form Fields Mapping */}
                   {[
+                    { label: 'የምዘና ሚና (Assessment Role)', key: 'role', type: 'select', options: ['regular', 'evaluator', 'approver'], displayOptions: ['ተገምጋሚ / አባል (Member)', 'ገምጋሚ (Evaluator)', 'አጽዳቂ (Approver)'] },
                     { label: 'ፆታ (Gender)', key: 'gender', type: 'select', options: ['ወንድ', 'ሴት'] },
                     { label: 'ዕድሜ (Age)', key: 'age', type: 'number' },
                     { label: 'የትምህርት ደረጃ (Education)', key: 'education_level', type: 'text' },
@@ -415,7 +424,11 @@ export function UserProfileDrawer({ isOpen, onClose, userId, periodId }: UserPro
                             className="w-full bg-surface-secondary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:ring-2 focus:ring-brand-blue outline-none"
                           >
                             <option value="">ምረጥ (Select)</option>
-                            {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            {field.options?.map((opt, idx) => (
+                              <option key={opt} value={opt}>
+                                {field.displayOptions ? field.displayOptions[idx] : opt}
+                              </option>
+                            ))}
                           </select>
                         ) : (
                           <input
@@ -428,7 +441,9 @@ export function UserProfileDrawer({ isOpen, onClose, userId, periodId }: UserPro
                         )
                       ) : (
                         <p className="text-sm font-medium text-text-primary bg-surface-secondary/30 border border-border/40 px-3 py-2 rounded-lg">
-                          {formData[field.key] || <span className="text-text-muted/50 italic">ያልተሞላ (N/A)</span>}
+                          {field.displayOptions && field.options?.indexOf(formData[field.key]) !== -1
+                            ? field.displayOptions[field.options!.indexOf(formData[field.key])]
+                            : (formData[field.key] || <span className="text-text-muted/50 italic">ያልተሞላ (N/A)</span>)}
                         </p>
                       )}
                     </div>

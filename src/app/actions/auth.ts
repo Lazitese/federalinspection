@@ -37,6 +37,7 @@ export async function registerUserAction(formData: FormData) {
     const periodId = formData.get('periodId') as string;
     const fullName = formData.get('fullName') as string;
     const rawPhone = formData.get('phone') as string;
+    const role = (formData.get('role') as string) || 'regular';
     let password = (formData.get('password') as string)?.trim() || '';
 
     if (!periodId || !fullName || !rawPhone) {
@@ -70,7 +71,11 @@ export async function registerUserAction(formData: FormData) {
       // User exists from a previous phone registration!
       userId = existingUser.id;
       // Update their auth account with the synthetic email and password
-      const updatePayload: any = { email: syntheticEmail, email_confirm: true };
+      const updatePayload: any = { 
+        email: syntheticEmail, 
+        email_confirm: true,
+        user_metadata: { force_password_change: isAdminCreated }
+      };
       if (password) updatePayload.password = password;
       
       const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(userId, updatePayload);
@@ -83,7 +88,7 @@ export async function registerUserAction(formData: FormData) {
         email: syntheticEmail,
         email_confirm: true,
         password: password,
-        user_metadata: { full_name: fullName, phone: phone }
+        user_metadata: { full_name: fullName, phone: phone, force_password_change: isAdminCreated }
       });
 
       if (authError) {
@@ -104,13 +109,29 @@ export async function registerUserAction(formData: FormData) {
     // 3. Insert into period_members
     const { error: memberError } = await supabaseAdmin
       .from('period_members')
-      .insert({ period_id: periodId, user_id: userId, role: 'regular' });
+      .insert({ period_id: periodId, user_id: userId, role: role });
 
     if (memberError) {
       // If the user was already a member, insert will fail depending on unique constraints.
       // Assuming conflict doesn't happen for a newly created user.
       return { error: 'Failed to add user to period' };
     }
+
+    // Upsert user profile
+    const profileData = {
+      user_id: userId,
+      gender: formData.get('gender') || null,
+      age: formData.get('age') ? parseInt(formData.get('age') as string) : null,
+      education_level: formData.get('educationLevel') || null,
+      professional_field: formData.get('professionalField') || null,
+      experience_professional: formData.get('expProfessional') ? parseInt(formData.get('expProfessional') as string) : null,
+      experience_leadership: formData.get('expLeadership') ? parseInt(formData.get('expLeadership') as string) : null,
+      institution: formData.get('institution') || null,
+      current_responsibility_gov: formData.get('govResponsibility') || null,
+      current_responsibility_com: formData.get('partyResponsibility') || null,
+    };
+    
+    await supabaseAdmin.from('user_profiles').upsert(profileData);
 
     // 4. Send SMS via Textbee
     const loginUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/assessment/login`;

@@ -81,3 +81,13 @@ export function getCurrentFiscalYear(): number {
   }
   return current.year;
 }
+
+export function getCurrentPeriod(): string {
+  const current = getCurrentEtDate();
+  if (current.month === ET_MONTHS.Meskerem) return '1ኛ ሩብ አመት';
+  if (current.month === ET_MONTHS.Tahsas) return '2ኛ ሩብ አመት';
+  if (current.month === ET_MONTHS.Megabit) return '3ኛ ሩብ አመት';
+  if (current.month === ET_MONTHS.Sene) return '4ኛ ሩብ አመት';
+  return 'NONE';
+}
+

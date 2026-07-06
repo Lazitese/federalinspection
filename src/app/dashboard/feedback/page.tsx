@@ -12,7 +12,8 @@ import {
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { getFeedbacks } from "@/app/actions/feedback";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
+import { formatECDateTime } from "@/lib/date-formatter";
 
 type RatingId = "very-good" | "good" | "needs-improvement" | "excellent" | "bad" | "very-bad";
 
@@ -26,10 +27,10 @@ interface FeedbackItem {
 }
 
 const RATING_LABELS: Record<string, string> = {
+  "excellent": "እጅግ በጣም ጥሩ",
   "very-good": "በጣም ጥሩ",
   "good": "ጥሩ",
   "needs-improvement": "መስተካከል አለበት (*)",
-  "excellent": "በጣም ጥሩ (ድሮ)",
   "bad": "መጥፎ (ድሮ)",
   "very-bad": "በጣም መጥፎ (ድሮ)",
 };
@@ -45,6 +46,7 @@ const RATING_COLORS: Record<string, string> = {
 
 const ratingFilters: { id: RatingId | "all"; label: string }[] = [
   { id: "all", label: "ሁሉም" },
+  { id: "excellent", label: "እጅግ በጣም ጥሩ" },
   { id: "very-good", label: "በጣም ጥሩ" },
   { id: "good", label: "ጥሩ" },
   { id: "needs-improvement", label: "መስተካከል አለበት" },
@@ -97,27 +99,16 @@ export default function FeedbackPage() {
 
   const counts = {
     all: feedbacks.length,
+    excellent: feedbacks.filter((f) => f.rating === "excellent").length,
     "very-good": feedbacks.filter((f) => f.rating === "very-good").length,
     good: feedbacks.filter((f) => f.rating === "good").length,
     "needs-improvement": feedbacks.filter((f) => f.rating === "needs-improvement").length,
   };
 
-  // Prepare chart data
-  const sentimentCounts = feedbacks.reduce(
-    (acc, f) => {
-      acc[f.sentiment] = (acc[f.sentiment] || 0) + 1;
-      return acc;
-    },
-    { positive: 0, neutral: 0, negative: 0 } as Record<string, number>
-  );
 
-  const pieData = [
-    { name: 'Positive', value: sentimentCounts.positive, color: '#10b981' },
-    { name: 'Neutral', value: sentimentCounts.neutral, color: '#3b82f6' },
-    { name: 'Negative', value: sentimentCounts.negative, color: '#ef4444' },
-  ].filter(d => d.value > 0);
 
   const barData = [
+    { name: 'Excellent', count: counts["excellent"] },
     { name: 'Very Good', count: counts["very-good"] },
     { name: 'Good', count: counts.good },
     { name: 'Needs Imp.', count: counts["needs-improvement"] },
@@ -172,108 +163,8 @@ export default function FeedbackPage() {
           </div>
         ) : (
           <>
-            {/* Charts Section */}
-            {feedbacks.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-5 border border-border/20 rounded-2xl bg-surface-primary/30 flex flex-col items-center">
-                  <h3 className="text-sm font-semibold text-text-secondary mb-4 w-full text-left">የስሜት ትንተና (Sentiment Analysis)</h3>
-                  <div className="h-48 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          innerRadius={50}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex gap-4 mt-2">
-                    {pieData.map(d => (
-                      <div key={d.name} className="flex items-center gap-1.5 text-xs text-text-muted">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }}></span>
-                        {d.name} ({d.value})
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p-5 border border-border/20 rounded-2xl bg-surface-primary/30 flex flex-col">
-                  <h3 className="text-sm font-semibold text-text-secondary mb-4">የግምገማ ስርጭት (Ratings Distribution)</h3>
-                  <div className="h-48 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} />
-                        <YAxis allowDecimals={false} fontSize={11} tickLine={false} axisLine={false} />
-                        <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                        <Bar dataKey="count" fill="#014BAA" radius={[4, 4, 0, 0]} barSize={30} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                {/* Category Distribution Recharts Chart */}
-                {categoryData.length > 0 && (
-                  <div className="col-span-1 md:col-span-2 mt-2 p-7 border border-border/20 rounded-[2rem] bg-gradient-to-br from-surface-primary/50 to-surface-secondary/30 flex flex-col w-full shadow-sm backdrop-blur-sm">
-                    <div className="flex flex-col mb-8">
-                      <h3 className="text-lg font-bold text-text-primary tracking-tight">የአገልግሎት ዘርፍ ግምገማዎች (Service Category Ratings)</h3>
-                      <p className="text-sm text-text-muted mt-1">በእያንዳንዱ የአገልግሎት ዓይነት (Category) የተሰጡ አስተያየቶች ስርጭት</p>
-                    </div>
-                    
-                    <div className="w-full" style={{ height: Math.max(300, categoryData.length * 70) }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart 
-                          data={categoryData} 
-                          layout="vertical" 
-                          margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
-                          barGap={2}
-                          barCategoryGap={16}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={true} stroke="var(--border)" strokeOpacity={0.4} />
-                          <XAxis type="number" hide />
-                          <YAxis 
-                            dataKey="name" 
-                            type="category" 
-                            width={160} 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fill: 'var(--text-secondary)', fontSize: 12, fontWeight: 500 }} 
-                          />
-                          <Tooltip 
-                            cursor={{ fill: 'var(--text-muted)', opacity: 0.1 }} 
-                            contentStyle={{ 
-                              borderRadius: '12px', 
-                              fontSize: '13px', 
-                              border: '1px solid var(--border)', 
-                              background: 'var(--surface-primary)', 
-                              color: 'var(--text-primary)', 
-                              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
-                            }}
-                          />
-                          <Legend 
-                            wrapperStyle={{ paddingTop: '20px', fontSize: '13px' }} 
-                            iconType="circle"
-                          />
-                          <Bar dataKey="positive" name="ጥሩ (Positive)" fill="#10b981" radius={[0, 4, 4, 0]} barSize={12} />
-                          <Bar dataKey="neutral" name="መካከለኛ (Neutral)" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={12} />
-                          <Bar dataKey="negative" name="መጥፎ (Negative)" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={12} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Summary cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {ratingFilters.map((filter) => (
                 <button
                   key={filter.id}
@@ -326,13 +217,7 @@ export default function FeedbackPage() {
                           </div>
                         </div>
                         <span className="text-[11px] text-text-muted shrink-0 whitespace-nowrap">
-                          {new Date(item.created_at).toLocaleDateString('am-ET', {
-                            month: 'long',
-                            day: 'numeric',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                          {formatECDateTime(item.created_at)}
                         </span>
                       </div>
                       
@@ -351,6 +236,79 @@ export default function FeedbackPage() {
                 ))
               )}
             </div>
+
+            {/* Charts Section */}
+            {feedbacks.length > 0 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                {/* Ratings Distribution */}
+                <div className="p-5 border border-border/20 rounded-2xl bg-surface-primary/30 flex flex-col h-[320px]">
+                  <h3 className="text-sm font-semibold text-text-secondary mb-4">የግምገማ ስርጭት (Ratings Distribution)</h3>
+                  <div className="flex-1 w-full min-h-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: 'var(--text-muted)' }} />
+                        <YAxis allowDecimals={false} fontSize={11} tickLine={false} axisLine={false} tick={{ fill: 'var(--text-muted)' }} />
+                        <Tooltip cursor={{ fill: 'var(--surface-secondary)', opacity: 0.5 }} contentStyle={{ borderRadius: '12px', fontSize: '12px', border: '1px solid var(--border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', background: 'var(--surface-primary)' }} />
+                        <Bar dataKey="count" fill="#014BAA" radius={[4, 4, 0, 0]} barSize={24} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Category Distribution Recharts Chart */}
+                {categoryData.length > 0 && (
+                  <div className="p-5 border border-border/20 rounded-2xl bg-surface-primary/30 flex flex-col h-[320px]">
+                    <div className="flex flex-col mb-4">
+                      <h3 className="text-sm font-semibold text-text-secondary">የአገልግሎት ዘርፍ ግምገማዎች (Service Category Ratings)</h3>
+                    </div>
+                    
+                    <div className="flex-1 w-full min-h-0 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+                      <div style={{ height: Math.max(220, categoryData.length * 48) }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart 
+                            data={categoryData} 
+                            layout="vertical" 
+                            margin={{ top: 0, right: 10, left: -10, bottom: 0 }}
+                            barGap={2}
+                            barCategoryGap={12}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={true} stroke="var(--border)" strokeOpacity={0.4} />
+                            <XAxis type="number" hide />
+                            <YAxis 
+                              dataKey="name" 
+                              type="category" 
+                              width={140} 
+                              axisLine={false} 
+                              tickLine={false} 
+                              tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontWeight: 500 }} 
+                            />
+                            <Tooltip 
+                              cursor={{ fill: 'var(--surface-secondary)', opacity: 0.5 }} 
+                              contentStyle={{ 
+                                borderRadius: '12px', 
+                                fontSize: '12px', 
+                                border: '1px solid var(--border)', 
+                                background: 'var(--surface-primary)', 
+                                color: 'var(--text-primary)', 
+                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
+                              }}
+                            />
+                            <Legend 
+                              wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} 
+                              iconType="circle"
+                              iconSize={8}
+                            />
+                            <Bar dataKey="positive" name="ጥሩ (Positive)" fill="#10b981" radius={[0, 4, 4, 0]} barSize={8} />
+                            <Bar dataKey="neutral" name="መካከለኛ (Neutral)" fill="#64748b" radius={[0, 4, 4, 0]} barSize={8} />
+                            <Bar dataKey="negative" name="መጥፎ (Negative)" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={8} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

@@ -58,7 +58,8 @@ export async function createRepresentativeAction(formData: FormData) {
     if (existingUser?.id) {
       userId = existingUser.id;
       const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-        email: syntheticEmail, email_confirm: true, password
+        email: syntheticEmail, email_confirm: true, password,
+        user_metadata: { full_name: fullName, phone: phone, requires_password_change: true }
       });
       if (updateErr && !updateErr.message.includes('already been registered')) {
         return { error: 'Failed to update auth: ' + updateErr.message };
@@ -68,7 +69,7 @@ export async function createRepresentativeAction(formData: FormData) {
         email: syntheticEmail,
         email_confirm: true,
         password,
-        user_metadata: { full_name: fullName, phone: phone }
+        user_metadata: { full_name: fullName, phone: phone, requires_password_change: true }
       });
       if (authError) return { error: authError.message };
       userId = authData.user.id;
@@ -130,7 +131,8 @@ export async function resetRepresentativePasswordAction(userId: string, phone: s
     const password = crypto.randomBytes(4).toString('hex'); // 8 characters
 
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      password
+      password,
+      user_metadata: { requires_password_change: true }
     });
 
     if (updateError) {
@@ -227,6 +229,22 @@ export async function provideAdminFeedbackAction(
       .update({
         admin_feedback: feedback,
         status: 'reviewed'
+      })
+      .eq('id', reportId);
+
+    if (error) return { error: error.message };
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function approveReportAction(reportId: string) {
+  try {
+    const { error } = await supabaseAdmin
+      .from('reports')
+      .update({
+        status: 'approved'
       })
       .eq('id', reportId);
 

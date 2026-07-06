@@ -12,6 +12,10 @@ import { useState } from "react";
 import * as z from "zod";
 import { COMMISSION_POSITIONS, OFFICE_CATEGORIES, Personnel } from "@/types";
 
+const ETHIOPIA_REGIONS = [
+  'ኦሮሚያ', 'አማራ', 'ሶማሌ', 'አፋር', 'ቤን-ጉሙዝ', 'ጋምቤላ', 'ሐረሪ', 'ሲዳማ', 'ደ/ም/ኢ/ያ', 'ደቡብ ኢ/ያ', 'ማዕ/ኢ/ያ', 'አዲስ አበባ', 'ድሬ ዳዋ', 'ፌዴራል ተቋማት'
+];
+
 // @BACKEND: Independent validation schema for personnel creation matching the form fields.
 const createPersonnelSchema = z.object({
   positionId: z.string().min(1, 'ሹመት ያስፈልጋል።'),
@@ -31,6 +35,11 @@ const createPersonnelSchema = z.object({
   phone: z.string().optional(),
   message: z.string().optional(),
   photoFile: z.any().optional(),
+  facebookUrl: z.string().url('ትክክለኛ የፌስቡክ ሊንክ ያስገቡ').optional().or(z.literal('')),
+  xUrl: z.string().url('ትክክለኛ የX (Twitter) ሊንክ ያስገቡ').optional().or(z.literal('')),
+  linkedinUrl: z.string().url('ትክክለኛ የLinkedIn ሊንክ ያስገቡ').optional().or(z.literal('')),
+  whatsappUrl: z.string().url('ትክክለኛ የWhatsApp ሊንክ ያስገቡ').optional().or(z.literal('')),
+  region: z.string().optional(),
 });
 
 type CreatePersonnelFormValues = z.infer<typeof createPersonnelSchema>;
@@ -59,10 +68,16 @@ export default function CreatePersonnelPage() {
       phone: '',
       message: '',
       photoFile: undefined,
+      facebookUrl: '',
+      xUrl: '',
+      linkedinUrl: '',
+      whatsappUrl: '',
+      region: '',
     },
   });
 
   const positionId = watch('positionId');
+  const officeId = watch('officeId');
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   
@@ -101,8 +116,13 @@ export default function CreatePersonnelPage() {
         email: '',
         phone: formData.phone || '',
         photo: photoUrl,
+        facebook_url: formData.facebookUrl || '',
+        x_url: formData.xUrl || '',
+        linkedin_url: formData.linkedinUrl || '',
+        whatsapp_url: formData.whatsappUrl || '',
         message: pos.id === 'chief' ? formData.message : undefined,
         status: 'Active' as const,
+        region: off.id === 'branch' ? formData.region : undefined,
       };
       
       await personnelService.createPersonnel(payload);
@@ -171,14 +191,14 @@ export default function CreatePersonnelPage() {
 
           <div className="w-full h-[1px] bg-border/20"></div>
 
-          {/* ሹመት እና ምድብ */}
+          {/* ኃላፊነት እና አደረጃጀት */}
           <div className="flex flex-col gap-6">
-            <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ሹመት እና ምድብ</h3>
+            <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ኃላፊነት እና አደረጃጀት</h3>
             <div className="grid grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ሹመት</label>
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ኃላፊነት (Position)</label>
                 <select {...register('positionId')} className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
-                  <option value="">ሹመት ይምረጡ...</option>
+                  <option value="">ኃላፊነት ይምረጡ...</option>
                   {COMMISSION_POSITIONS.map(pos => (
                     <option key={pos.id} value={pos.id}>{pos.nameAm}</option>
                   ))}
@@ -186,15 +206,29 @@ export default function CreatePersonnelPage() {
                 {errors.positionId && <span className="text-xs text-danger">{errors.positionId.message}</span>}
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ምድብ</label>
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">አደረጃጀት (Category)</label>
                 <select {...register('officeId')} className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
-                  <option value="">ምድብ ይምረጡ...</option>
+                  <option value="">አደረጃጀት ይምረጡ...</option>
                   {OFFICE_CATEGORIES.map(off => (
                     <option key={off.id} value={off.id}>{off.nameAm}</option>
                   ))}
                 </select>
                 {errors.officeId && <span className="text-xs text-danger">{errors.officeId.message}</span>}
               </div>
+
+              {/* Conditional Region for Branch Office */}
+              {officeId === 'branch' && (
+                <div className="flex flex-col gap-2 col-span-2">
+                  <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ክልል / ቅርንጫፍ (Region)</label>
+                  <select {...register('region')} className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer">
+                    <option value="">ክልል ይምረጡ...</option>
+                    {ETHIOPIA_REGIONS.map(reg => (
+                      <option key={reg} value={reg}>{reg}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-text-muted">ይህ ክፍል የሚሞላው ለቅርንጫፍ ጽ/ቤት ብቻ ነው</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -290,6 +324,26 @@ export default function CreatePersonnelPage() {
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ስልክ ቁጥር</label>
                 <input {...register('phone')} type="tel" placeholder="+251 911 123 456" className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors" />
               </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">የፌስቡክ ሊንክ (Facebook URL)</label>
+                <input {...register('facebookUrl')} type="url" placeholder="https://facebook.com/..." className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors" />
+                {errors.facebookUrl && <span className="text-xs text-danger">{errors.facebookUrl.message as string}</span>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">የX ሊንክ (X URL)</label>
+                <input {...register('xUrl')} type="url" placeholder="https://x.com/..." className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors" />
+                {errors.xUrl && <span className="text-xs text-danger">{errors.xUrl.message as string}</span>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">የሊንክዲን ሊንክ (LinkedIn URL)</label>
+                <input {...register('linkedinUrl')} type="url" placeholder="https://linkedin.com/in/..." className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors" />
+                {errors.linkedinUrl && <span className="text-xs text-danger">{errors.linkedinUrl.message as string}</span>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">የዋትስአፕ ሊንክ (WhatsApp URL)</label>
+                <input {...register('whatsappUrl')} type="url" placeholder="https://wa.me/251911..." className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors" />
+                {errors.whatsappUrl && <span className="text-xs text-danger">{errors.whatsappUrl.message as string}</span>}
+              </div>
             </div>
           </div>
 
@@ -306,6 +360,7 @@ export default function CreatePersonnelPage() {
               </div>
             </div>
           )}
+
         </div>
       </form>
     </DashboardLayout>

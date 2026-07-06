@@ -1,0 +1,3 @@
+ALTER TABLE public.personnel
+ADD COLUMN IF NOT EXISTS facebook_url TEXT,
+ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ;

@@ -8,6 +8,7 @@ export const newsSchema = z.object({
   category: z.string().optional(),
   body: z.string().min(10, 'Body content is required.'),
   status: z.enum(['Draft', 'Published']).optional(),
+  article_type: z.enum(['News', 'Message']).optional(),
 });
 
 export const documentSchema = z.object({
@@ -39,7 +40,7 @@ export const adminSchema = z.object({
   name: z.string().min(3, 'Full name is required.'),
   email: z.string().email('Invalid email address.'),
   phone: z.string().min(9, 'Phone number is too short.'),
-  accessLevel: z.enum(['all', 'specific']),
+  accessLevel: z.enum(['all', 'specific', 'group']),
   modules: z.array(z.string()).optional(),
   status: z.enum(['Active', 'Inactive']).optional(),
 });

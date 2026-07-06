@@ -32,6 +32,12 @@ export default function AssessmentModulePage() {
         router.push('/assessment/login');
         return;
       }
+
+      if (currentSession.user.user_metadata?.force_password_change) {
+        router.push('/assessment/change-password');
+        return;
+      }
+      
       setSession(currentSession);
 
       // 1. Get user's membership (latest active period)
@@ -74,7 +80,26 @@ export default function AssessmentModulePage() {
           .eq('user_id', currentSession.user.id)
           .single();
         
-        if (fScore) setFinalScore(fScore);
+        // Fetch detailed breakdowns for modern UI report
+        const [selfRes, evalRes, apprRes, userRes] = await Promise.all([
+          supabase.from('self_assessments').select('*').eq('user_id', currentSession.user.id).eq('period_id', activePeriod.id).single(),
+          supabase.from('evaluations').select('*, evaluator:users!evaluator_id(full_name)').eq('target_user_id', currentSession.user.id).eq('period_id', activePeriod.id),
+          supabase.from('approver_evaluations').select('*, approver:users!approver_id(full_name)').eq('target_user_id', currentSession.user.id).eq('period_id', activePeriod.id).single(),
+          supabase.from('users').select('*, user_profiles(*)').eq('id', currentSession.user.id).single()
+        ]);
+
+        if (fScore) {
+          setFinalScore({
+            ...fScore,
+            details: {
+              self: selfRes.data,
+              evals: evalRes.data || [],
+              appr: apprRes.data,
+              user: userRes.data,
+              period: activePeriod
+            }
+          });
+        }
         setLoading(false);
         return;
       }
@@ -142,7 +167,7 @@ export default function AssessmentModulePage() {
 
   const renderContent = () => {
     if (period.status === 'finalized') {
-      return <FinalRevealView score={finalScore?.final_score_100 || 0} />;
+      return <FinalRevealView data={finalScore} />;
     }
 
     // Everyone must complete their self assessment first

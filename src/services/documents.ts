@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { Document, DocumentFile } from '../types';
+import { formatECDate } from '@/lib/date-formatter';
 
 export const MAIN_CATEGORIES = [
   { code: '000', name: 'መተዳደሪያ ደንብ' },
@@ -119,7 +120,8 @@ export const documentService = {
       year: d.year,
       uploadedBy: d.uploaded_by,
       uploadDate: d.upload_date,
-      files: d.files || []
+      files: d.files || [],
+      is_public: d.is_public ?? true
     })) as Document[];
   },
 
@@ -145,7 +147,8 @@ export const documentService = {
       year: data.year,
       uploadedBy: data.uploaded_by,
       uploadDate: data.upload_date,
-      files: data.files || []
+      files: data.files || [],
+      is_public: data.is_public ?? true
     } as Document;
   },
 
@@ -185,7 +188,7 @@ export const documentService = {
         sub_category: docData.subCategory,
         year: docData.year,
         uploaded_by: 'Current Admin', // This should be fetched from context normally
-        upload_date: new Date().toLocaleDateString('am-ET', { month: 'short', day: 'numeric', year: 'numeric' }),
+        upload_date: formatECDate(new Date()),
         files: [documentFile]
       }])
       .select()
@@ -203,7 +206,8 @@ export const documentService = {
       year: data.year,
       uploadedBy: data.uploaded_by,
       uploadDate: data.upload_date,
-      files: data.files || []
+      files: data.files || [],
+      is_public: data.is_public ?? true
     } as Document;
   },
 
@@ -220,5 +224,24 @@ export const documentService = {
       return false;
     }
     return true;
+  },
+
+  togglePublicStatus: async (id: string, is_public: boolean): Promise<boolean> => {
+    const { error } = await supabase
+      .from('documents')
+      .update({ is_public })
+      .eq('id', id);
+      
+    if (error) {
+      console.error('Error toggling public status:', error);
+      return false;
+    }
+    return true;
+  },
+
+  getFileUrl: (docData: { office: string, year: string }, fileId: string): string => {
+    const storagePath = `${docData.office}/${docData.year}/${fileId}`;
+    const { data } = supabase.storage.from('documents').getPublicUrl(storagePath);
+    return data.publicUrl;
   }
 };

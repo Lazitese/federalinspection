@@ -9,19 +9,37 @@ export function NewsMessagesSection() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-  const [articles, setArticles] = useState<any[]>([]);
+  const [news, setNews] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'News' | 'Message'>('News');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     import("@/services/news").then(({ newsService }) => {
       newsService.getArticles().then(data => {
-        // Filter out drafts just in case the user is an admin looking at the homepage
         const published = data.filter(a => a.status === 'Published');
-        setArticles(published);
+        const newsItems = published.filter(a => a.article_type !== 'Message');
+        const messageItems = published.filter(a => a.article_type === 'Message');
+        
+        setNews(newsItems);
+        setMessages(messageItems);
+        
+        // Determine default tab based on latest date
+        const latestNewsDate = newsItems.length > 0 ? new Date(newsItems[0].published || newsItems[0].created).getTime() : 0;
+        const latestMessageDate = messageItems.length > 0 ? new Date(messageItems[0].published || messageItems[0].created).getTime() : 0;
+        
+        if (latestMessageDate > latestNewsDate) {
+          setActiveTab('Message');
+        } else {
+          setActiveTab('News');
+        }
+        
         setLoading(false);
       });
     });
   }, []);
+
+  const activeArticles = activeTab === 'News' ? news : messages;
 
   const checkState = () => {
     const el = scrollRef.current;
@@ -43,7 +61,7 @@ export function NewsMessagesSection() {
       el.removeEventListener("scroll", checkState);
       window.removeEventListener("resize", checkState);
     };
-  }, [articles]); // Re-run when articles load
+  }, [activeArticles, activeTab]); // Re-run when active articles load or tab changes
 
   const scroll = (dir: "left" | "right") => {
     const el = scrollRef.current;
@@ -74,6 +92,30 @@ export function NewsMessagesSection() {
             </h2>
             {/* Yellow accent rule */}
             <div className="mt-6 h-1 w-12 rounded-full" style={{ backgroundColor: "#FFB800" }} />
+            
+            {/* Tabs */}
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={() => setActiveTab('News')}
+                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
+                  activeTab === 'News' 
+                    ? 'bg-[#014BAA] text-white shadow-md' 
+                    : 'bg-white border border-slate-200 text-slate-600 hover:border-[#014BAA] hover:text-[#014BAA]'
+                }`}
+              >
+                ዜና (News)
+              </button>
+              <button
+                onClick={() => setActiveTab('Message')}
+                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
+                  activeTab === 'Message' 
+                    ? 'bg-[#014BAA] text-white shadow-md' 
+                    : 'bg-white border border-slate-200 text-slate-600 hover:border-[#014BAA] hover:text-[#014BAA]'
+                }`}
+              >
+                መልዕክቶች (Messages)
+              </button>
+            </div>
           </div>
 
           {/* Arrows */}
@@ -112,11 +154,11 @@ export function NewsMessagesSection() {
               <div className="w-full flex justify-center py-10">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#014BAA]"></div>
               </div>
-            ) : articles.length === 0 ? (
+            ) : activeArticles.length === 0 ? (
               <div className="w-full flex justify-center py-10 text-slate-500">
-                ምንም ዜና አልተገኘም (No news found)
+                ምንም {activeTab === 'News' ? 'ዜና' : 'መልዕክት'} አልተገኘም
               </div>
-            ) : articles.map((item, index) => (
+            ) : activeArticles.map((item, index) => (
               <article
                 key={item.id}
                 className="group w-[85vw] shrink-0 snap-start overflow-hidden rounded-3xl bg-white p-2 shadow-[0_4px_20px_-6px_rgba(0,0,0,0.06)] ring-1 ring-slate-100 transition-all duration-400 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.10)] sm:w-[360px] md:w-[400px]"
@@ -158,12 +200,12 @@ export function NewsMessagesSection() {
                     </p>
                   </div>
                   <Link
-                    href={`/news/${item.id}`}
+                    href={activeTab === 'Message' ? `/messages/${item.id}` : `/news/${item.id}`}
                     className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold transition-colors"
                     style={{ color: "#014BAA" }}
                     aria-label={`${item.title} ሙሉ ይዘት`}
                   >
-                    የጽሁፉን ሙሉ ይዘት ያንብቡ
+                    የ{activeTab === 'Message' ? 'መልዕክቱን' : 'ጽሁፉን'} ሙሉ ይዘት ያንብቡ
                     <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
                   </Link>
                 </div>

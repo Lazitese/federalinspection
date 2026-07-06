@@ -1,4 +1,4 @@
-import { SubmissionForm } from "@/components/submission-form";
+import { TikomaForm } from "@/components/tikoma-form";
 import { Menubar } from "@/components/menubar";
 import { Metadata } from "next";
 
@@ -12,7 +12,7 @@ export default function TikomaPage() {
     <>
       <Menubar />
       <div className="bg-slate-50 min-h-screen pt-24 pb-12">
-        <SubmissionForm type="tikoma" />
+        <TikomaForm />
       </div>
     </>
   );

@@ -45,3 +45,5 @@ next-env.d.ts
 /backend/dist
 /backend/.env
 
+# Migrations
+migration/

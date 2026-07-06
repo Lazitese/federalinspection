@@ -9,7 +9,7 @@ import { newsSchema } from "@/lib/validations";
 import { newsService } from "@/services/news";
 import { useRouter } from "next/navigation";
 import * as z from "zod";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 
 type NewsFormValues = z.infer<typeof newsSchema>;
@@ -25,9 +25,19 @@ export default function CreateNewsPage() {
       title: "",
       language: "አማርኛ",
       body: "",
-      status: "Published"
+      status: "Published",
+      article_type: "News"
     }
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const type = new URLSearchParams(window.location.search).get('type');
+      if (type === 'Message' || type === 'News') {
+        setValue('article_type', type);
+      }
+    }
+  }, [setValue]);
 
   const watchedBody = watch("body");
 
@@ -124,6 +134,16 @@ export default function CreateNewsPage() {
                 <option value="Tigrinya">ትግርኛ</option>
               </select>
               {errors.language && <span className="text-xs text-danger">{errors.language.message}</span>}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ዓይነት (Type)</label>
+              <select 
+                {...register("article_type")} 
+                className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer"
+              >
+                <option value="News">ዜና</option>
+                <option value="Message">መልዕክት</option>
+              </select>
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ሁኔታ</label>

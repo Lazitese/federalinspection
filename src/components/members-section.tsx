@@ -5,6 +5,7 @@ import Image from "next/image";
 
 import { personnelService } from "@/services/personnel";
 import { Personnel, COMMISSION_POSITIONS } from "@/types";
+import { IconBrandFacebook, IconBrandX, IconBrandLinkedin, IconBrandWhatsapp } from "@tabler/icons-react";
 
 // @BACKEND: This section reads from the personnel service.
 // Members are grouped by office tab, then by position row.
@@ -28,7 +29,9 @@ export function MembersSection() {
     });
   }, []);
 
-  const currentOffice = personnel.filter(p => {
+  const activePersonnel = personnel.filter(p => p.status === 'Active');
+
+  const currentOffice = activePersonnel.filter(p => {
     if (activeTab === 'main') return p.officeCategory === 'Main Office';
     if (activeTab === 'branch') return p.officeCategory === 'Branch Office';
     if (activeTab === 'commission-members') return p.officeCategory === 'Commission Members';
@@ -137,10 +140,60 @@ export function MembersSection() {
                         </div>
                         <div className="flex min-h-[120px] flex-col justify-between p-5 sm:p-6">
                           <div>
-                            <h3 className="text-base font-semibold text-slate-900 line-clamp-1">{member.nameAm || member.name}</h3>
-                            <p className="text-sm text-slate-500 mt-1">{member.positionAm}</p>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h3 className="text-base font-semibold text-slate-900 line-clamp-1">{member.nameAm || member.name}</h3>
+                                <p className="text-sm text-slate-500 mt-1">{member.positionAm}</p>
+                              </div>
+                              <div className="flex gap-2">
+                                  {member.facebook_url && (
+                                    <a 
+                                      href={member.facebook_url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 p-1.5 rounded-full hover:bg-blue-50"
+                                      aria-label={`${member.nameAm || member.name} Facebook Profile`}
+                                    >
+                                      <IconBrandFacebook size={20} />
+                                    </a>
+                                  )}
+                                  {member.x_url && (
+                                    <a 
+                                      href={member.x_url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 p-1.5 rounded-full hover:bg-slate-200"
+                                      aria-label={`${member.nameAm || member.name} X (Twitter) Profile`}
+                                    >
+                                      <IconBrandX size={20} />
+                                    </a>
+                                  )}
+                                  {member.linkedin_url && (
+                                    <a 
+                                      href={member.linkedin_url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-slate-400 hover:text-blue-700 transition-colors bg-slate-50 p-1.5 rounded-full hover:bg-blue-50"
+                                      aria-label={`${member.nameAm || member.name} LinkedIn Profile`}
+                                    >
+                                      <IconBrandLinkedin size={20} />
+                                    </a>
+                                  )}
+                                  {member.whatsapp_url && (
+                                    <a 
+                                      href={member.whatsapp_url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-slate-400 hover:text-green-600 transition-colors bg-slate-50 p-1.5 rounded-full hover:bg-green-50"
+                                      aria-label={`${member.nameAm || member.name} WhatsApp`}
+                                    >
+                                      <IconBrandWhatsapp size={20} />
+                                    </a>
+                                  )}
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-xs text-slate-400 mt-3 flex items-center gap-1.5">
+                          <p className="text-xs text-slate-400 mt-4 flex items-center gap-1.5">
                             <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                             {member.officeCategoryAm}
                           </p>

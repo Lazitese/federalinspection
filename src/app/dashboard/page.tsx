@@ -5,6 +5,7 @@ import { Greeting } from "@/components/ui/greeting";
 import { IconNews, IconFileText, IconUsers, IconMessage2, IconQrcode, IconCheck, IconX, IconDeviceMobile, IconChartBar } from '@tabler/icons-react';
 import Link from "next/link";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { PendingQRRequests } from "@/components/dashboard/pending-qr-requests";
 
 const formatTimeAgo = (dateString: string) => {
   if (!dateString) return '';
@@ -50,12 +51,12 @@ export default async function DashboardPage() {
   // Fetch Pending QR Requests
   const { data: scanRequests } = await supabaseAdmin.from('scan_requests')
     .select('*')
-    .eq('status', 'pending')
+    .ilike('status', 'pending')
     .order('created_at', { ascending: false })
     .limit(3);
 
   const qrRequests = scanRequests?.map(req => ({
-    id: req.id.split('-')[0], // Just taking the first part of UUID
+    id: req.id, // Using the full UUID so actions work
     device: req.requester_device || 'Unknown Device',
     file: req.file_name || 'Unknown File',
     time: formatTimeAgo(req.created_at)
@@ -129,37 +130,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
           <div className="flex flex-col gap-3">
-            {qrRequests.length > 0 ? qrRequests.map(req => (
-              <div key={req.id} className="bg-surface-primary/30 border border-border/20 rounded-2xl p-4 backdrop-blur-sm hover:bg-surface-primary/50 transition-colors relative overflow-hidden">
-                <div className="absolute top-0 left-0 bottom-0 w-1 bg-warning/50"></div>
-                <div className="flex items-center justify-between pl-3">
-                  <div className="flex items-center gap-4">
-                    <div className="w-9 h-9 rounded-xl bg-surface-secondary flex items-center justify-center text-text-muted">
-                      <IconDeviceMobile size={18} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-text-primary">{req.device}</span>
-                        <span className="text-[10px] text-text-muted">• {req.time}</span>
-                      </div>
-                      <span className="text-xs text-brand-blue font-medium">{req.file}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1 bg-success/10 hover:bg-success/20 text-success px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors">
-                      <IconCheck size={12} stroke={3} /> አጽድቅ
-                    </button>
-                    <button className="flex items-center gap-1 bg-danger/10 hover:bg-danger/20 text-danger px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors">
-                      <IconX size={12} stroke={3} /> አትቀበል
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )) : (
-              <div className="text-center py-6 text-text-muted bg-surface-primary/30 border border-border/20 rounded-2xl backdrop-blur-sm">
-                ምንም ጥያቄዎች የሉም
-              </div>
-            )}
+            <PendingQRRequests initialRequests={qrRequests} />
           </div>
         </div>
 

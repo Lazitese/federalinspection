@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 import { Admin, AccessLevel } from '../types';
+import { formatECDateTime } from '@/lib/date-formatter';
 
 export const adminService = {
   getAdmins: async (): Promise<Admin[]> => {
@@ -18,8 +19,8 @@ export const adminService = {
       groups: profile.groups || [],
       modules: profile.modules || [],
       status: profile.status || 'Active',
-      lastLogin: profile.last_login ? new Date(profile.last_login).toLocaleDateString() : '-',
-      createdAt: new Date(profile.created_at).toLocaleDateString(),
+      lastLogin: profile.last_login ? formatECDateTime(profile.last_login) : '-',
+      createdAt: formatECDateTime(profile.created_at),
     }));
   },
 
@@ -39,8 +40,8 @@ export const adminService = {
       groups: data.groups || [],
       modules: data.modules || [],
       status: data.status || 'Active',
-      lastLogin: data.last_login ? new Date(data.last_login).toLocaleDateString() : '-',
-      createdAt: new Date(data.created_at).toLocaleDateString(),
+      lastLogin: data.last_login ? formatECDateTime(data.last_login) : '-',
+      createdAt: formatECDateTime(data.created_at),
     };
   },
 

@@ -72,13 +72,22 @@ export default function NewsPage() {
               </select>
               <IconSearch size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             </div>
-            <Link
-              href="/dashboard/news/create"
-              className="flex items-center gap-2 bg-brand-blue hover:bg-brand-blue/90 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm whitespace-nowrap"
-            >
-              <IconPlus size={18} />
-              አዲስ ዜና
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                href="/dashboard/news/create"
+                className="flex items-center gap-2 bg-brand-blue hover:bg-brand-blue/90 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm whitespace-nowrap"
+              >
+                <IconPlus size={18} />
+                አዲስ ዜና
+              </Link>
+              <Link
+                href="/dashboard/news/create?type=Message"
+                className="flex items-center gap-2 bg-brand-yellow hover:bg-brand-yellow/90 text-[#3D352E] px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm whitespace-nowrap"
+              >
+                <IconPlus size={18} />
+                መልዕክት አጋራ
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -149,13 +158,18 @@ export default function NewsPage() {
                     </div>
                   )}
 
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${article.status === 'Published'
                         ? 'bg-success/90 text-white'
                         : 'bg-brand-yellow/90 text-[#3D352E]'
                       }`}>
                       {article.status === 'Published' ? 'የታተመ' : 'ረቂቅ'}
                     </span>
+                    {article.article_type === 'Message' && (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm bg-[#014BAA]/90 text-white w-fit">
+                        መልዕክት
+                      </span>
+                    )}
                   </div>
 
                   <div className="absolute bottom-3 left-3">

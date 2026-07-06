@@ -5,13 +5,10 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { checkRateLimit } from "@/lib/rateLimit";
 
-export async function submitFeedback(category: string, rating: string, review: string) {
+export async function submitFeedback(category: string, rating: string, review: string, region?: string, sector?: string) {
   let sentiment = "neutral";
-  if (rating === "very-good") sentiment = "positive";
-  else if (rating === "needs-improvement") sentiment = "negative";
-  // For backwards compatibility
-  else if (rating === "excellent") sentiment = "positive";
-  else if (["bad", "very-bad"].includes(rating)) sentiment = "negative";
+  if (rating === "very-good" || rating === "excellent") sentiment = "positive";
+  else if (rating === "needs-improvement" || ["bad", "very-bad"].includes(rating)) sentiment = "negative";
 
   const headersList = await headers();
   const forwardedFor = headersList.get('x-forwarded-for');
@@ -29,6 +26,8 @@ export async function submitFeedback(category: string, rating: string, review: s
     rating,
     review,
     sentiment,
+    region,
+    sector,
   });
 
   if (error) {

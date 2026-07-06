@@ -51,7 +51,6 @@ export default function EditAdminPage() {
       email: '',
       phone: '',
       accessLevel: 'specific',
-      groups: [],
       modules: [],
       status: 'Active',
     },
@@ -65,7 +64,6 @@ export default function EditAdminPage() {
         setValue('email', data.email);
         setValue('phone', data.phone);
         setValue('accessLevel', data.accessLevel);
-        setValue('groups', data.groups);
         setValue('modules', data.modules);
         setValue('status', data.status);
       }
@@ -74,16 +72,7 @@ export default function EditAdminPage() {
   }, [id, setValue]);
 
   const accessLevel = watch('accessLevel');
-  const selectedGroups = watch('groups') || [];
   const selectedModules = watch('modules') || [];
-
-  const toggleGroup = (groupId: string) => {
-    const current = [...selectedGroups];
-    const idx = current.indexOf(groupId);
-    if (idx > -1) current.splice(idx, 1);
-    else current.push(groupId);
-    setValue('groups', current, { shouldValidate: true });
-  };
 
   const toggleModule = (moduleId: string) => {
     const current = [...selectedModules];
@@ -95,7 +84,7 @@ export default function EditAdminPage() {
 
   const onSubmit = async (data: AdminFormValues) => {
     try {
-      if (data.accessLevel === 'all') { data.groups = []; data.modules = []; }
+      if (data.accessLevel === 'all') { data.modules = []; }
       await adminService.updateAdmin(id, data as unknown as Admin);
       router.push('/dashboard/admins');
     } catch (error) {

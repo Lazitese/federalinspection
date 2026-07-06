@@ -13,6 +13,10 @@ import * as z from "zod";
 import { COMMISSION_POSITIONS, OFFICE_CATEGORIES, Personnel } from "@/types";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
+const ETHIOPIA_REGIONS = [
+  'ኦሮሚያ', 'አማራ', 'ሶማሌ', 'አፋር', 'ቤን-ጉሙዝ', 'ጋምቤላ', 'ሐረሪ', 'ሲዳማ', 'ደ/ም/ኢ/ያ', 'ደቡብ ኢ/ያ', 'ማዕ/ኢ/ያ', 'አዲስ አበባ', 'ድሬ ዳዋ', 'ፌዴራል ተቋማት'
+];
+
 const editPersonnelSchema = z.object({
   positionId: z.string().min(1, 'ሹመት ያስፈልጋል።'),
   officeId: z.string().min(1, 'ምድብ ያስፈልጋል።'),
@@ -31,7 +35,12 @@ const editPersonnelSchema = z.object({
   phone: z.string().optional(),
   message: z.string().optional(),
   photoFile: z.any().optional(),
-  status: z.enum(['Active', 'Inactive']).optional(),
+  facebookUrl: z.string().url('ትክክለኛ የፌስቡክ ሊንክ ያስገቡ').optional().or(z.literal('')),
+  xUrl: z.string().url('ትክክለኛ የX (Twitter) ሊንክ ያስገቡ').optional().or(z.literal('')),
+  linkedinUrl: z.string().url('ትክክለኛ የLinkedIn ሊንክ ያስገቡ').optional().or(z.literal('')),
+  whatsappUrl: z.string().url('ትክክለኛ የWhatsApp ሊንክ ያስገቡ').optional().or(z.literal('')),
+  status: z.enum(['Active', 'Inactive', 'Archived']).optional(),
+  region: z.string().optional(),
 });
 
 type EditPersonnelFormValues = z.infer<typeof editPersonnelSchema>;
@@ -51,6 +60,7 @@ export default function EditPersonnelPage({ params }: { params: Promise<{ id: st
   });
 
   const positionId = watch('positionId');
+  const officeId = watch('officeId');
 
   useEffect(() => {
     personnelService.getPersonnelById(id).then(data => {
@@ -67,8 +77,13 @@ export default function EditPersonnelPage({ params }: { params: Promise<{ id: st
           age: 30, // default or derived
           educationType: data.department,
           phone: data.phone,
+          facebookUrl: data.facebook_url || '',
+          xUrl: data.x_url || '',
+          linkedinUrl: data.linkedin_url || '',
+          whatsappUrl: data.whatsapp_url || '',
           message: data.message || '',
           status: data.status,
+          region: data.region || '',
         });
 
         if (data.photo) {
@@ -111,8 +126,13 @@ export default function EditPersonnelPage({ params }: { params: Promise<{ id: st
         department: formData.educationType || '',
         phone: formData.phone || '',
         photo: photoUrl,
+        facebook_url: formData.facebookUrl || '',
+        x_url: formData.xUrl || '',
+        linkedin_url: formData.linkedinUrl || '',
+        whatsapp_url: formData.whatsappUrl || '',
         message: pos.id === 'chief' ? formData.message : undefined,
         status: formData.status || 'Active',
+        region: off.id === 'branch' ? formData.region : undefined,
       };
       await personnelService.updatePersonnel(id, payload);
       setStatusMsg({ type: 'success', text: 'መረጃው በትክክል ተሻሽሏል!' });
@@ -134,6 +154,19 @@ export default function EditPersonnelPage({ params }: { params: Promise<{ id: st
     router.push('/dashboard/personnel');
   };
 
+  const handleArchive = async () => {
+    try {
+      await personnelService.updatePersonnel(id, {
+        status: 'Archived',
+        archived_at: new Date().toISOString()
+      });
+      router.push('/dashboard/personnel');
+    } catch (e) {
+      console.error(e);
+      setStatusMsg({ type: 'error', text: 'ወደ መዝገብ (Archive) ማዛወር አልተቻለም።' });
+    }
+  };
+
   if (loading) return <DashboardLayout><div className="flex h-full items-center justify-center text-text-muted">በማምጣት ላይ...</div></DashboardLayout>;
   if (!personnelData) return <DashboardLayout><div className="flex h-full items-center justify-center text-text-muted">መረጃ አልተገኘም</div></DashboardLayout>;
 
@@ -149,7 +182,10 @@ export default function EditPersonnelPage({ params }: { params: Promise<{ id: st
             <p className="text-sm text-text-muted mt-1">{personnelData.nameAm || personnelData.name} መረጃ ማስተካከያ</p>
           </div>
           <div className="flex gap-4">
-            <button type="button" onClick={handleDelete} className="flex items-center gap-2 bg-danger/10 hover:bg-danger/20 text-danger px-5 py-2.5 rounded-full text-sm font-semibold transition-colors">
+            <button type="button" onClick={handleArchive} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-full text-sm font-semibold transition-colors">
+              ወደ መዝገብ (Archive)
+            </button>
+            <button type="button" onClick={handleDelete} className="flex items-center gap-2 bg-danger/10 hover:bg-danger/20 text-danger px-4 py-2.5 rounded-full text-sm font-semibold transition-colors">
               <IconTrash size={18} />
               አጥፋ
             </button>
@@ -199,14 +235,14 @@ export default function EditPersonnelPage({ params }: { params: Promise<{ id: st
 
           <div className="w-full h-[1px] bg-border/20"></div>
 
-          {/* ሹመት እና ምድብ */}
+          {/* ኃላፊነት እና አደረጃጀት */}
           <div className="flex flex-col gap-6">
-            <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ሹመት እና ምድብ</h3>
+            <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ኃላፊነት እና አደረጃጀት</h3>
             <div className="grid grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ሹመት</label>
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ኃላፊነት (Position)</label>
                 <select {...register('positionId')} className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors appearance-none cursor-pointer">
-                  <option value="">ሹመት ይምረጡ...</option>
+                  <option value="">ኃላፊነት ይምረጡ...</option>
                   {COMMISSION_POSITIONS.map(pos => (
                     <option key={pos.id} value={pos.id}>{pos.nameAm}</option>
                   ))}
@@ -214,9 +250,9 @@ export default function EditPersonnelPage({ params }: { params: Promise<{ id: st
                 {errors.positionId && <span className="text-xs text-danger">{errors.positionId.message}</span>}
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ምድብ</label>
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">አደረጃጀት (Category)</label>
                 <select {...register('officeId')} className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors appearance-none cursor-pointer">
-                  <option value="">ምድብ ይምረጡ...</option>
+                  <option value="">አደረጃጀት ይምረጡ...</option>
                   {OFFICE_CATEGORIES.map(off => (
                     <option key={off.id} value={off.id}>{off.nameAm}</option>
                   ))}
@@ -231,8 +267,22 @@ export default function EditPersonnelPage({ params }: { params: Promise<{ id: st
                 <select {...register('status')} className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors appearance-none cursor-pointer">
                   <option value="Active">ገቢር (Active)</option>
                   <option value="Inactive">ታግዷል (Inactive)</option>
+                  <option value="Archived">መዝገብ (Archived)</option>
                 </select>
               </div>
+
+              {officeId === 'branch' && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ክልል / ቅርንጫፍ (Region)</label>
+                  <select {...register('region')} className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors appearance-none cursor-pointer">
+                    <option value="">ክልል ይምረጡ...</option>
+                    {ETHIOPIA_REGIONS.map(reg => (
+                      <option key={reg} value={reg}>{reg}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-text-muted">ይህ ክፍል የሚሞላው ለቅርንጫፍ ጽ/ቤት ብቻ ነው</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -254,6 +304,26 @@ export default function EditPersonnelPage({ params }: { params: Promise<{ id: st
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">ስልክ ቁጥር</label>
                 <input {...register('phone')} type="tel" placeholder="+251 911 123 456" className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">የፌስቡክ ሊንክ (Facebook URL)</label>
+                <input {...register('facebookUrl')} type="url" placeholder="https://facebook.com/..." className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors" />
+                {errors.facebookUrl && <span className="text-xs text-danger">{errors.facebookUrl.message as string}</span>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">የX ሊንክ (X URL)</label>
+                <input {...register('xUrl')} type="url" placeholder="https://x.com/..." className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors" />
+                {errors.xUrl && <span className="text-xs text-danger">{errors.xUrl.message as string}</span>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">የሊንክዲን ሊንክ (LinkedIn URL)</label>
+                <input {...register('linkedinUrl')} type="url" placeholder="https://linkedin.com/in/..." className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors" />
+                {errors.linkedinUrl && <span className="text-xs text-danger">{errors.linkedinUrl.message as string}</span>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">የዋትስአፕ ሊንክ (WhatsApp URL)</label>
+                <input {...register('whatsappUrl')} type="url" placeholder="https://wa.me/251911..." className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors" />
+                {errors.whatsappUrl && <span className="text-xs text-danger">{errors.whatsappUrl.message as string}</span>}
               </div>
             </div>
           </div>

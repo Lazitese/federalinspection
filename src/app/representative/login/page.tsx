@@ -46,7 +46,11 @@ export default function FormsLoginPage() {
         throw new Error("Access Denied: You are not a registered representative.");
       }
 
-      router.push("/representative/dashboard"); // They will be redirected here or where appropriate
+      if (data.user.user_metadata?.requires_password_change) {
+        router.push("/representative/change-password");
+      } else {
+        router.push("/representative/dashboard");
+      }
     } catch (err: any) {
       setError(err.message || "Invalid credentials. Please try again.");
     } finally {

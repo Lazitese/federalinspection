@@ -17,6 +17,7 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
   const [title, setTitle] = useState('');
   const [lang, setLang] = useState('English');
   const [status, setStatus] = useState<'Published' | 'Draft'>('Draft');
+  const [articleType, setArticleType] = useState<'News' | 'Message'>('News');
   const [body, setBody] = useState('');
   
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
         setTitle(data.title);
         setLang(data.lang);
         setStatus(data.status);
+        setArticleType(data.article_type || 'News');
         setBody(data.content || data.body || data.excerpt || '');
       }
       setLoading(false);
@@ -42,6 +44,7 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
         title,
         lang,
         status,
+        article_type: articleType,
         content: body, // Map back to content for the backend
       });
       router.push(`/dashboard/news/${id}`);
@@ -93,6 +96,13 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
                 <option value="Afaan Oromo">Afaan Oromo</option>
                 <option value="Somali">Somali</option>
                 <option value="Tigrinya">Tigrinya</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Type</label>
+              <select value={articleType} onChange={e => setArticleType(e.target.value as any)} className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors appearance-none cursor-pointer">
+                <option value="News">News</option>
+                <option value="Message">Message</option>
               </select>
             </div>
             <div className="flex flex-col gap-2">

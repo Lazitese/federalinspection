@@ -1,14 +1,48 @@
 "use client";
 
 import { useState } from "react";
-import { IconFileDescription, IconCheck, IconX, IconMessageCircle, IconLoader2 } from "@tabler/icons-react";
-import { provideAdminFeedbackAction } from "@/app/actions/reports";
+import { IconFileDescription, IconCheck, IconX, IconMessageCircle, IconLoader2, IconDownload, IconThumbUp } from "@tabler/icons-react";
+import { provideAdminFeedbackAction, approveReportAction } from "@/app/actions/reports";
+import { formatECDate } from "@/lib/date-formatter";
 
 export function AdminReportsView({ initialReports }: { initialReports: any[] }) {
   const [reports, setReports] = useState(initialReports);
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
   const [feedbackText, setFeedbackText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [autoApprove, setAutoApprove] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+
+  const handleDownload = () => {
+    // Basic CSV download logic
+    let csv = "ክልል,ዓመት,ወቅት,ሁኔታ\n";
+    reports.forEach(r => {
+      csv += `${r.region},${r.year},${r.period},${r.status}\n`;
+    });
+    
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `aggregated_reports_${new Date().getTime()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleApprove = async () => {
+    if (!selectedReport) return;
+    setIsApproving(true);
+    const result = await approveReportAction(selectedReport.id);
+    if (!result.error) {
+      setReports(reports.map(r => r.id === selectedReport.id ? { ...r, status: 'approved' } : r));
+      setSelectedReport({ ...selectedReport, status: 'approved' });
+      alert("ሪፖርቱ ፀድቋል (Approved successfully)");
+    } else {
+      alert("Error: " + result.error);
+    }
+    setIsApproving(false);
+  };
 
   const handleFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +62,28 @@ export function AdminReportsView({ initialReports }: { initialReports: any[] }) 
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-text-primary tracking-tight">የደረሱ ሪፖርቶች</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-bold text-text-primary tracking-tight">የደረሱ ሪፖርቶች</h2>
+          <label className="flex items-center gap-2 cursor-pointer bg-bg-secondary px-3 py-1.5 rounded-lg border border-border-light">
+            <input 
+              type="checkbox" 
+              checked={autoApprove} 
+              onChange={(e) => setAutoApprove(e.target.checked)}
+              className="w-4 h-4 text-brand-blue rounded border-border-medium focus:ring-brand-blue"
+            />
+            <span className="text-sm font-medium text-text-secondary">Auto-Approve</span>
+          </label>
+        </div>
+        
+        <button
+          onClick={handleDownload}
+          className="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-blue/90 transition-colors flex items-center gap-2 shadow-sm"
+        >
+          <IconDownload size={18} />
+          Aggregated CSV
+        </button>
+      </div>
 
       {reports.length === 0 ? (
         <div className="py-12 flex flex-col items-center justify-center text-center bg-bg-secondary/50 rounded-xl border border-dashed border-border-medium">
@@ -58,14 +113,15 @@ export function AdminReportsView({ initialReports }: { initialReports: any[] }) 
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       report.status === 'submitted' ? 'bg-status-warning/10 text-status-warning border border-status-warning/20' : 
-                      report.status === 'reviewed' ? 'bg-status-success/10 text-status-success border border-status-success/20' : 
+                      report.status === 'reviewed' ? 'bg-brand-blue/10 text-brand-blue border border-brand-blue/20' : 
+                      report.status === 'approved' ? 'bg-status-success/10 text-status-success border border-status-success/20' : 
                       'bg-bg-secondary text-text-muted border border-border-medium'
                     }`}>
-                      {report.status === 'submitted' ? 'አዲስ' : report.status === 'reviewed' ? 'ታይቷል' : 'በመሰራት ላይ (Draft)'}
+                      {report.status === 'submitted' ? 'አዲስ' : report.status === 'reviewed' ? 'ታይቷል' : report.status === 'approved' ? 'የፀደቀ' : 'በመሰራት ላይ (Draft)'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {report.submitted_at ? new Date(report.submitted_at).toLocaleDateString('am-ET') : '-'}
+                    {report.submitted_at ? formatECDate(report.submitted_at) : '-'}
                   </td>
                   <td className="px-4 py-3">
                     <button 
@@ -87,7 +143,14 @@ export function AdminReportsView({ initialReports }: { initialReports: any[] }) 
           <div className="bg-bg-primary w-full max-w-3xl rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-border-light bg-bg-secondary/30 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-bold text-text-primary tracking-tight">ሪፖርት ግምገማ: {selectedReport.region}</h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-bold text-text-primary tracking-tight">ሪፖርት ግምገማ: {selectedReport.region}</h2>
+                  {selectedReport.status === 'approved' && (
+                    <span className="bg-status-success/10 text-status-success text-xs font-bold px-2 py-0.5 rounded-full border border-status-success/20 flex items-center gap-1">
+                      <IconCheck size={14} /> የፀደቀ (Approved)
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-text-muted mt-1">{selectedReport.year} - {selectedReport.period}</p>
               </div>
               <button onClick={() => setSelectedReport(null)} className="p-2 hover:bg-border-light rounded-full text-text-muted transition-colors">
@@ -122,7 +185,18 @@ export function AdminReportsView({ initialReports }: { initialReports: any[] }) 
                     placeholder="ለሪፖርት አቅራቢው ግብረ መልስ ይፃፉ..."
                     className="w-full px-4 py-3 bg-bg-secondary border border-border-light rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-all text-text-primary min-h-[120px]"
                   />
-                  <div className="flex justify-end gap-3">
+                  <div className="flex justify-end gap-3 items-center">
+                    {selectedReport.status !== 'approved' && (
+                      <button
+                        type="button"
+                        onClick={handleApprove}
+                        disabled={isApproving}
+                        className="px-5 py-2 bg-status-success text-white font-medium rounded-xl hover:bg-status-success/90 transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
+                      >
+                        {isApproving ? <IconLoader2 size={18} className="animate-spin" /> : <IconThumbUp size={18} />}
+                        አፅድቅ (Approve)
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setSelectedReport(null)}
@@ -133,7 +207,7 @@ export function AdminReportsView({ initialReports }: { initialReports: any[] }) 
                     <button
                       type="submit"
                       disabled={loading || !feedbackText.trim()}
-                      className="px-5 py-2 bg-brand-blue text-white font-medium rounded-xl hover:bg-brand-blue/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                      className="px-5 py-2 bg-brand-blue text-white font-medium rounded-xl hover:bg-brand-blue/90 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm"
                     >
                       {loading ? <IconLoader2 size={18} className="animate-spin" /> : <><IconCheck size={18} /> ላክ</>}
                     </button>

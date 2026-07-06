@@ -8,11 +8,12 @@ import { submitFeedback } from "@/app/actions/feedback";
 import { IconStar, IconStarFilled, IconMessageCircle, IconCheck, IconLoader2, IconAlertCircle } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
-type RatingId = "very-good" | "good" | "needs-improvement";
+type RatingId = "excellent" | "very-good" | "good" | "needs-improvement";
 
 const RATING_OPTIONS: { id: RatingId; label: string; icon: React.ReactNode }[] = [
-  { id: "very-good", label: "በጣም ጥሩ", icon: <div className="flex"><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/></div> },
-  { id: "good", label: "ጥሩ", icon: <div className="flex"><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStar size={20}/></div> },
+  { id: "excellent", label: "እጅግ በጣም ጥሩ", icon: <div className="flex"><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/></div> },
+  { id: "very-good", label: "በጣም ጥሩ", icon: <div className="flex"><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStar size={20}/></div> },
+  { id: "good", label: "ጥሩ", icon: <div className="flex"><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStar size={20}/><IconStar size={20}/></div> },
   { id: "needs-improvement", label: "መስተካከል አለበት (*)", icon: <div className="flex"><IconStarFilled size={20}/><IconStarFilled size={20}/><IconStar size={20}/><IconStar size={20}/><IconStar size={20}/></div> },
 ];
 
@@ -20,12 +21,37 @@ const CATEGORIES = [
   "የፖርቲ የፖለቲካዊ ጤንነት መጠበቁን ከማረጋገጥ አኳያ",
   "የፖርቲ አባላት መብቶች መከበርን ከማረጋገጥ አኳያ",
   "የፖርቲ ሀብቶች መጠበቃቸውን ከማረጋገጥ አኳያ",
-  "የኮሚሽኑ ተቋማዊ አቅም ግንባታን ከማጠናከር አኳያ"
+  "የኮሚሽኑ ተቋማዊ አቅም ግንባታን ከማጠናከር አኳያ",
+  "የአቤቱታ/ጥቆማ አፈታት ሂደት"
+];
+
+const REGIONS = [
+  { label: "ኦሮሚያ", value: "ኦሮሚያ" },
+  { label: "አማራ", value: "አማራ" },
+  { label: "ሶማሌ", value: "ሶማሌ" },
+  { label: "አፋር", value: "አፋር" },
+  { label: "ቤን-ጉሙዝ", value: "ቤን-ጉሙዝ" },
+  { label: "ጋምቤላ", value: "ጋምቤላ" },
+  { label: "ሐረሪ", value: "ሐረሪ" },
+  { label: "ሲዳማ", value: "ሲዳማ" },
+  { label: "ደ/ም/ኢ/ያ", value: "ደ/ም/ኢ/ያ" },
+  { label: "ደቡብ ኢ/ያ", value: "ደቡብ ኢ/ያ" },
+  { label: "ማዕ/ኢ/ያ", value: "ማዕ/ኢ/ያ" },
+  { label: "አዲስ አበባ", value: "አዲስ አበባ" },
+  { label: "ድሬ ዳዋ", value: "ድሬ ዳዋ" },
+  { label: "ፌዴራል ተቋማት", value: "ፌዴራል ተቋማት" }
+];
+
+const SECTORS = [
+  "የስነምግባር ዘርፍ",
+  "የኢንስፔክሽን ዘርፍ"
 ];
 
 export default function AsteyayetPage() {
   const [rating, setRating] = useState<RatingId | null>(null);
   const [category, setCategory] = useState<string>("");
+  const [region, setRegion] = useState<string>("");
+  const [sector, setSector] = useState<string>("");
   const [review, setReview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -35,6 +61,14 @@ export default function AsteyayetPage() {
     e.preventDefault();
     if (!category) {
       setError("እባክዎ አስተያየትዎ የሚያተኩርበትን ጉዳይ ይምረጡ");
+      return;
+    }
+    if (!region) {
+      setError("እባክዎ ቅርንጫፍ ጽ/ቤት ይምረጡ");
+      return;
+    }
+    if (!sector) {
+      setError("እባክዎ ዘርፍ ይምረጡ");
       return;
     }
     if (!rating) {
@@ -50,10 +84,12 @@ export default function AsteyayetPage() {
     setError("");
 
     try {
-      await submitFeedback(category, rating, review);
+      await submitFeedback(category, rating, review, region, sector);
       setIsSuccess(true);
       setRating(null);
       setCategory("");
+      setRegion("");
+      setSector("");
       setReview("");
     } catch (err: any) {
       const errorMessage = err?.message || "አስተያየትዎን ማስገባት አልተቻለም። እባክዎ እንደገና ይሞክሩ።";
@@ -125,11 +161,57 @@ export default function AsteyayetPage() {
                     </select>
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <label htmlFor="region" className="block text-sm font-semibold text-slate-900">
+                        ቅርንጫፍ ጽ/ቤት (ክልል) <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="region"
+                        value={region}
+                        onChange={(e) => {
+                          setRegion(e.target.value);
+                          if (!e.target.value) setSector("");
+                        }}
+                        className="block w-full rounded-2xl border-slate-200 bg-slate-50 px-5 py-4 text-sm focus:border-[#014BAA] focus:ring-[#014BAA] focus:bg-white transition-colors appearance-none cursor-pointer"
+                        style={{ backgroundImage: `url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23131313%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem top 50%', backgroundSize: '0.65em auto' }}
+                      >
+                        <option value="" disabled>ክልል ይምረጡ</option>
+                        {REGIONS.map((reg, idx) => (
+                            <option key={idx} value={reg.value}>
+                              {reg.label}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label htmlFor="sector" className="block text-sm font-semibold text-slate-900">
+                        ዘርፍ <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="sector"
+                        value={sector}
+                        onChange={(e) => setSector(e.target.value)}
+                        disabled={!region}
+                        className="block w-full rounded-2xl border-slate-200 bg-slate-50 px-5 py-4 text-sm focus:border-[#014BAA] focus:ring-[#014BAA] focus:bg-white transition-colors appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ backgroundImage: `url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23131313%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem top 50%', backgroundSize: '0.65em auto' }}
+                      >
+                        <option value="" disabled>ዘርፍ ይምረጡ</option>
+                        {SECTORS.map((sec, idx) => (
+                          <option key={idx} value={sec}>
+                            {sec}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   <div className="space-y-4">
                     <label className="block text-sm font-semibold text-slate-900">
                       የደረጃ አሰጣጥ <span className="text-red-500">*</span>
                     </label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                       {RATING_OPTIONS.map((opt) => (
                         <button
                           key={opt.id}

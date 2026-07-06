@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 
-export type PublicFileCategory = 'መተዳደርያ ደንብ' | 'የኮሚሽኑ መመሪያዎች' | 'የፓርቲ መመሪያዎች';
+export type PublicFileCategory = 'መተዳደርያ ደንብ' | 'የኮሚሽኑ መመሪያዎች' | 'የፓርቲ መመሪያዎች' | 'የኮሚሽኑ ሚስጥራዊ ሰነዶች';
 
 export interface PublicFile {
   id: string;
@@ -20,6 +20,8 @@ export const publicFilesService = {
     
     if (category) {
       query = query.eq('category', category);
+    } else {
+      query = query.neq('category', 'የኮሚሽኑ ሚስጥራዊ ሰነዶች');
     }
 
     const { data, error } = await query;
@@ -49,16 +51,24 @@ export const publicFilesService = {
       
       const safeFolder = folderMap[category] || 'other';
       const filePath = `${safeFolder}/${fileName}`;
+      const isConfidential = category === 'የኮሚሽኑ ሚስጥራዊ ሰነዶች';
+      const bucketName = isConfidential ? 'confidential_documents' : 'public_documents';
 
       const { error: uploadError } = await supabase.storage
-        .from('public_documents')
+        .from(bucketName)
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
-        .from('public_documents')
-        .getPublicUrl(filePath);
+      let fileUrlToSave = '';
+      if (isConfidential) {
+        fileUrlToSave = filePath; // Save internal path for secure retrieval
+      } else {
+        const { data: urlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(filePath);
+        fileUrlToSave = urlData.publicUrl;
+      }
 
       const fileSize = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
 
@@ -67,7 +77,7 @@ export const publicFilesService = {
         .insert({
           title,
           category,
-          file_url: urlData.publicUrl,
+          file_url: fileUrlToSave,
           file_name: file.name,
           file_size: fileSize,
           file_type: file.type,
@@ -78,21 +88,30 @@ export const publicFilesService = {
 
       return { success: true };
     } catch (error: any) {
-      console.error('Error uploading public file:', error);
+      console.error('Error uploading public file:', error, JSON.stringify(error, null, 2));
       return { success: false, error: error.message || 'Unknown error occurred' };
     }
   },
 
-  deleteFile: async (id: string, fileUrl: string): Promise<boolean> => {
+  deleteFile: async (id: string, fileUrl: string, category: PublicFileCategory): Promise<boolean> => {
     try {
-      // Extract the path from the URL
-      // The URL looks like: https://[project].supabase.co/storage/v1/object/public/public_documents/[category]/[filename]
-      const urlParts = fileUrl.split('/public_documents/');
-      if (urlParts.length === 2) {
-        const filePath = urlParts[1];
+      const isConfidential = category === 'የኮሚሽኑ ሚስጥራዊ ሰነዶች';
+      const bucketName = isConfidential ? 'confidential_documents' : 'public_documents';
+
+      let filePath = '';
+      if (isConfidential) {
+        filePath = fileUrl; // For confidential files, fileUrl is actually the path
+      } else {
+        const urlParts = fileUrl.split(`/${bucketName}/`);
+        if (urlParts.length === 2) {
+          filePath = urlParts[1];
+        }
+      }
+
+      if (filePath) {
         // Delete from storage
         const { error: storageError } = await supabase.storage
-          .from('public_documents')
+          .from(bucketName)
           .remove([filePath]);
           
         if (storageError) {

@@ -27,7 +27,13 @@ export const personnelService = {
       phone: item.phone,
       photo: item.photo,
       message: item.message,
+      facebook_url: item.facebook_url,
+      x_url: item.x_url,
+      linkedin_url: item.linkedin_url,
+      whatsapp_url: item.whatsapp_url,
+      archived_at: item.archived_at,
       status: item.status,
+      region: item.region,
     })) as Personnel[];
   },
   
@@ -58,7 +64,13 @@ export const personnelService = {
       phone: data.phone,
       photo: data.photo,
       message: data.message,
+      facebook_url: data.facebook_url,
+      x_url: data.x_url,
+      linkedin_url: data.linkedin_url,
+      whatsapp_url: data.whatsapp_url,
+      archived_at: data.archived_at,
       status: data.status,
+      region: data.region,
     } as Personnel;
   },
   
@@ -75,7 +87,13 @@ export const personnelService = {
       phone: data.phone,
       photo: data.photo,
       message: data.message,
+      facebook_url: data.facebook_url,
+      x_url: data.x_url,
+      linkedin_url: data.linkedin_url,
+      whatsapp_url: data.whatsapp_url,
+      archived_at: data.archived_at,
       status: data.status,
+      region: data.region,
     };
     
     const { data: insertedData, error } = await supabase
@@ -108,7 +126,13 @@ export const personnelService = {
     if (data.phone !== undefined) payload.phone = data.phone;
     if (data.photo !== undefined) payload.photo = data.photo;
     if (data.message !== undefined) payload.message = data.message;
+    if (data.facebook_url !== undefined) payload.facebook_url = data.facebook_url;
+    if (data.x_url !== undefined) payload.x_url = data.x_url;
+    if (data.linkedin_url !== undefined) payload.linkedin_url = data.linkedin_url;
+    if (data.whatsapp_url !== undefined) payload.whatsapp_url = data.whatsapp_url;
+    if (data.archived_at !== undefined) payload.archived_at = data.archived_at;
     if (data.status !== undefined) payload.status = data.status;
+    if (data.region !== undefined) payload.region = data.region;
     
     const { data: updatedData, error } = await supabase
       .from('personnel')

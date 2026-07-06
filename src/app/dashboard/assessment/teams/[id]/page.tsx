@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { ArrowLeft, Trash2, ShieldCheck, Loader2, Plus, QrCode, X, AlertCircle, Power, Pencil, Users, Filter, Download } from 'lucide-react';
+import { ArrowLeft, Trash2, ShieldCheck, Loader2, Plus, QrCode, X, AlertCircle, Power, Pencil, Users, Filter, Download, UserCircle2, FileCheck } from 'lucide-react';
 import Link from 'next/link';
 import { UserProfileDrawer } from '@/components/assessment/UserProfileDrawer';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
@@ -32,10 +32,19 @@ export default function PeriodManagePage() {
     isDanger?: boolean;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  // Add Member Modal State
   const [showAddModal, setShowAddModal] = useState(false);
   const [addFullName, setAddFullName] = useState('');
   const [addPhone, setAddPhone] = useState('');
+  const [addRole, setAddRole] = useState('regular');
+  const [addGender, setAddGender] = useState('');
+  const [addAge, setAddAge] = useState('');
+  const [addEducationLevel, setAddEducationLevel] = useState('');
+  const [addProfessionalField, setAddProfessionalField] = useState('');
+  const [addExpProfessional, setAddExpProfessional] = useState('');
+  const [addExpLeadership, setAddExpLeadership] = useState('');
+  const [addInstitution, setAddInstitution] = useState('');
+  const [addGovResponsibility, setAddGovResponsibility] = useState('');
+  const [addPartyResponsibility, setAddPartyResponsibility] = useState('');
   
   // Profile Drawer State
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
@@ -204,6 +213,16 @@ export default function PeriodManagePage() {
       formData.append('periodId', periodId);
       formData.append('fullName', addFullName);
       formData.append('phone', addPhone);
+      formData.append('role', addRole);
+      formData.append('gender', addGender);
+      formData.append('age', addAge);
+      formData.append('educationLevel', addEducationLevel);
+      formData.append('professionalField', addProfessionalField);
+      formData.append('expProfessional', addExpProfessional);
+      formData.append('expLeadership', addExpLeadership);
+      formData.append('institution', addInstitution);
+      formData.append('govResponsibility', addGovResponsibility);
+      formData.append('partyResponsibility', addPartyResponsibility);
 
       const result = await registerUserAction(formData);
 
@@ -214,6 +233,15 @@ export default function PeriodManagePage() {
       setAddSuccess(true);
       setAddFullName('');
       setAddPhone('');
+      setAddGender('');
+      setAddAge('');
+      setAddEducationLevel('');
+      setAddProfessionalField('');
+      setAddExpProfessional('');
+      setAddExpLeadership('');
+      setAddInstitution('');
+      setAddGovResponsibility('');
+      setAddPartyResponsibility('');
       setShowAddModal(false);
       showToast('አዲስ አባል በተሳካ ሁኔታ ተጨምሯል!', 'success');
       fetchPeriodData(); // Refresh list
@@ -319,69 +347,58 @@ export default function PeriodManagePage() {
             <ArrowLeft className="w-4 h-4 mr-1" /> ወደ ዳሽቦርድ ተመለስ
           </Link>
           
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-surface-primary p-6 rounded-2xl border border-border shadow-sm">
-            <div className="space-y-1 flex-1">
-              <h1 className="text-3xl font-heading text-text-primary">{period.name}</h1>
-              <p className="text-text-secondary text-sm font-mono opacity-60">መለያ: {period.id}</p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 mt-2">
+            <div className="flex-1">
+              <h1 className="text-3xl font-heading font-bold text-text-primary tracking-tight">{period.name}</h1>
             </div>
             
-            <div className="flex items-center flex-wrap gap-4">
-              <div className="flex items-center gap-3 bg-surface-secondary px-4 py-2 rounded-xl border border-border/50">
-                <span className="text-sm font-medium text-text-primary">ሁኔታ:</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-text-secondary">ሁኔታ:</span>
                 <button 
                   onClick={handleStatusToggle}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    period.status === 'active' ? 'bg-brand-blue' : 'bg-surface-primary border border-border'
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-blue/50 focus:ring-offset-1 focus:ring-offset-background ${
+                    period.status === 'active' ? 'bg-brand-blue' : 'bg-surface-secondary border border-border'
                   }`}
                 >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    period.status === 'active' ? 'translate-x-6' : 'translate-x-1'
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                    period.status === 'active' ? 'translate-x-4.5' : 'translate-x-1'
                   }`} />
                 </button>
-                <span className={`text-sm font-medium ${period.status === 'active' ? 'text-brand-blue' : 'text-text-secondary'}`}>
+                <span className={`text-sm font-medium ${period.status === 'active' ? 'text-brand-blue' : 'text-text-muted'}`}>
                   {period.status === 'active' ? 'በሂደት ላይ' : 'የተጠናቀቀ'}
                 </span>
               </div>
               
-              <div className="flex gap-2">
-                <Link 
-                  href={`/dashboard/assessment/teams/${period.id}/qr`}
-                  className="inline-flex items-center justify-center bg-surface-secondary text-text-primary px-4 py-2.5 rounded-xl font-medium hover:bg-border transition-colors border border-border shadow-sm"
-                >
-                  <QrCode className="w-4 h-4 mr-2 text-brand-yellow" />
-                  የመመዝገቢያ QR
-                </Link>
-                <button 
-                  onClick={() => setShowAddModal(true)}
-                  className="inline-flex items-center justify-center bg-brand-blue text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-blue/90 transition-colors shadow-sm"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  አዲስ አባል
-                </button>
-              </div>
+              <button 
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center justify-center bg-brand-blue text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-blue/90 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                አዲስ አባል (Add Member)
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="premium-card overflow-hidden">
-          <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-lg font-heading text-text-primary">
-              <Users className="w-5 h-5 text-brand-blue" />
-              <h3>የተመዘገቡ ተጠቃሚዎች እና ውጤቶች</h3>
-              <span className="bg-surface-secondary text-text-secondary px-3 py-1 rounded-full text-sm font-medium ml-2 border border-border/50">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2">
+            <div className="flex items-center gap-2 text-text-primary">
+              <h3 className="text-xl font-semibold">የተመዘገቡ ተጠቃሚዎች</h3>
+              <span className="bg-brand-blue/10 text-brand-blue px-2.5 py-0.5 rounded-full text-xs font-bold ml-1">
                 {filteredMembers.length}
               </span>
             </div>
             
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-surface-secondary px-3 py-1.5 rounded-xl border border-border/50">
-                <Filter className="w-4 h-4 text-text-secondary" />
+              <div className="flex items-center gap-2 bg-transparent border-b border-border pb-1 transition-colors focus-within:border-brand-blue">
+                <Filter className="w-4 h-4 text-text-muted" />
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="bg-transparent border-none text-sm font-medium text-text-primary focus:ring-0 cursor-pointer outline-none"
+                  className="bg-transparent border-none text-sm font-medium text-text-primary focus:ring-0 cursor-pointer outline-none w-full"
                 >
-                  <option value="all">ሁሉም</option>
+                  <option value="all">ሁሉም ሚናዎች (All Roles)</option>
                   {ROLES.map(r => (
                     <option key={r.value} value={r.value}>{r.label}</option>
                   ))}
@@ -390,10 +407,10 @@ export default function PeriodManagePage() {
               
               <button
                 onClick={handleBulkExport}
-                className="inline-flex items-center justify-center bg-surface-secondary text-brand-blue px-4 py-2 rounded-xl font-medium hover:bg-border transition-colors border border-border/50 text-sm shadow-sm"
+                className="inline-flex items-center justify-center bg-transparent text-brand-blue px-3 py-1.5 rounded-lg font-medium hover:bg-brand-blue/10 transition-all duration-200 text-sm hover:scale-[1.02] active:scale-[0.98]"
               >
-                <Download className="w-4 h-4 mr-2" />
-                {selectedUserIds.size > 0 ? `የተመረጡትን አውርድ (${selectedUserIds.size})` : 'ሁሉንም አውርድ'}
+                <Download className="w-4 h-4 mr-1.5" />
+                {selectedUserIds.size > 0 ? `አውርድ (${selectedUserIds.size})` : 'ሁሉንም አውርድ'}
               </button>
             </div>
           </div>
@@ -409,11 +426,11 @@ export default function PeriodManagePage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-surface-secondary text-text-secondary font-medium">
+            <div className="w-full">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead className="border-b-2 border-border/60 text-text-muted font-medium text-[11px] uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-4 w-10">
+                    <th className="py-3 pr-4 w-10">
                       <input 
                         type="checkbox" 
                         checked={selectedUserIds.size === filteredMembers.length && filteredMembers.length > 0}
@@ -421,24 +438,24 @@ export default function PeriodManagePage() {
                         className="rounded border-border/80 text-brand-blue focus:ring-brand-blue/50 w-4 h-4 cursor-pointer"
                       />
                     </th>
-                    <th className="px-6 py-4">ስም</th>
-                    <th className="px-6 py-4">ሚና</th>
-                    <th className="px-6 py-4 text-center">የራስ (10)</th>
-                    <th className="px-6 py-4 text-center">የገምጋሚ (20)</th>
-                    <th className="px-6 py-4 text-center">የአጽዳቂ (70)</th>
-                    <th className="px-6 py-4 text-center border-l border-border/50 bg-surface-secondary/50">ድምር (100)</th>
-                    <th className="px-6 py-4 border-l border-border/50">ድርጊት</th>
+                    <th className="px-2 py-3">ስም (Name)</th>
+                    <th className="px-2 py-3">ሚና (Role)</th>
+                    <th className="px-2 py-3 text-center">የራስ (10)</th>
+                    <th className="px-2 py-3 text-center">የገምጋሚ (20)</th>
+                    <th className="px-2 py-3 text-center">የአጽዳቂ (70)</th>
+                    <th className="px-2 py-3 text-center text-brand-blue">ድምር (100)</th>
+                    <th className="pl-2 py-3 text-right">ድርጊት</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-border/30">
                   {filteredMembers.map((member) => {
                     const userScores = scores[member.user_id] || { s10: 0, s20: 0, s70: 0, f100: 0 };
                     const currentTotal = userScores.s10 + userScores.s20 + userScores.s70;
                     const isSelected = selectedUserIds.has(member.id);
                     
                     return (
-                      <tr key={member.id} className={`hover:bg-surface-secondary/50 transition-colors ${isSelected ? 'bg-brand-blue/5' : ''}`}>
-                        <td className="px-6 py-4">
+                      <tr key={member.id} className={`group/row transition-colors ${isSelected ? 'bg-brand-blue/5' : 'hover:bg-surface-secondary/20'}`}>
+                        <td className="py-3 pr-4">
                           <input 
                             type="checkbox" 
                             checked={isSelected}
@@ -446,27 +463,27 @@ export default function PeriodManagePage() {
                             className="rounded border-border/80 text-brand-blue focus:ring-brand-blue/50 w-4 h-4 cursor-pointer"
                           />
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-3">
                           <button 
                             onClick={() => {
                               setSelectedProfileId(member.user_id);
                               setIsDrawerOpen(true);
                             }}
-                            className="text-left group"
+                            className="text-left flex flex-col outline-none focus-visible:ring-2 focus-visible:ring-brand-blue rounded"
                           >
-                            <p className="font-medium text-text-primary group-hover:text-brand-blue transition-colors">
+                            <span className="font-medium text-text-primary transition-colors truncate max-w-[200px]">
                               {member.users?.full_name || 'ያልታወቀ'}
-                            </p>
-                            <p className="text-xs text-text-muted font-mono mt-0.5">{member.users?.phone_number}</p>
+                            </span>
+                            <span className="text-xs text-text-muted mt-0.5">{member.users?.phone_number}</span>
                           </button>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-3">
                           <div className="flex items-center gap-2">
                             <select
                               value={pendingRoles[member.id] || member.role}
                               onChange={(e) => setPendingRoles({...pendingRoles, [member.id]: e.target.value})}
                               disabled={period.status !== 'active' || updatingRole === member.id}
-                              className="bg-surface-primary border border-border text-text-primary text-xs rounded-lg focus:ring-brand-blue focus:border-brand-blue block p-2 disabled:opacity-50 min-w-[120px] shadow-sm hover:border-brand-blue/30 transition-colors"
+                              className="bg-transparent border-0 hover:bg-surface-secondary/50 text-text-secondary text-sm rounded focus:ring-1 focus:ring-brand-blue focus:border-brand-blue block py-1 disabled:opacity-50 min-w-[100px] transition-colors outline-none cursor-pointer"
                             >
                               {ROLES.map(r => (
                                 <option key={r.value} value={r.value}>{r.label}</option>
@@ -476,54 +493,58 @@ export default function PeriodManagePage() {
                               <button
                                 onClick={() => handleRoleChange(member.id, pendingRoles[member.id])}
                                 disabled={updatingRole === member.id}
-                                className="bg-brand-blue text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-brand-blue/90 transition-colors"
+                                className="bg-brand-blue text-white px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-brand-blue/90 transition-all hover:scale-105 active:scale-95"
                               >
                                 {updatingRole === member.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'አስቀምጥ'}
                               </button>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center font-mono">
+                        <td className="px-2 py-3 text-center">
                           {userScores.s10 > 0 ? (
-                            <span className="text-brand-blue font-medium bg-brand-blue/10 px-2 py-0.5 rounded">{userScores.s10}</span>
+                            <span className="text-text-secondary">{userScores.s10}</span>
                           ) : (
-                            <span className="text-text-muted">-</span>
+                            <span className="text-border">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-center font-mono">
+                        <td className="px-2 py-3 text-center">
                           {userScores.s20 > 0 ? (
-                            <span className="text-brand-blue font-medium bg-brand-blue/10 px-2 py-0.5 rounded">{userScores.s20}</span>
+                            <span className="text-text-secondary">{userScores.s20}</span>
                           ) : (
-                            <span className="text-text-muted">-</span>
+                            <span className="text-border">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-center font-mono">
+                        <td className="px-2 py-3 text-center">
                           {userScores.s70 > 0 ? (
-                            <span className="text-brand-yellow font-medium bg-brand-yellow/10 px-2 py-0.5 rounded">{userScores.s70}</span>
+                            <span className="text-text-secondary">{userScores.s70}</span>
                           ) : (
-                            <span className="text-text-muted">-</span>
+                            <span className="text-border">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-center font-mono font-bold border-l border-border/50 text-text-primary bg-surface-secondary/20">
+                        <td className="px-2 py-3 text-center font-bold text-brand-blue">
                           {period.status === 'finalized' ? userScores.f100 : currentTotal}
                         </td>
-                        <td className="px-6 py-4 border-l border-border/50 flex gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedProfileId(member.user_id);
-                              setIsDrawerOpen(true);
-                            }}
-                            className="text-brand-blue hover:text-brand-blue/80 bg-brand-blue/10 hover:bg-brand-blue/20 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-brand-blue/20"
-                          >
-                            መገለጫ
-                          </button>
-                          <button
-                            onClick={() => handleRemoveMember(member.id, member.users?.full_name || 'ያልታወቀ')}
-                            disabled={period.status !== 'active'}
-                            className="text-danger hover:text-danger/80 bg-danger/10 hover:bg-danger/20 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 border border-danger/20"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <td className="pl-2 py-3 text-right">
+                          <div className="flex justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => {
+                                setSelectedProfileId(member.user_id);
+                                setIsDrawerOpen(true);
+                              }}
+                              className="text-text-secondary hover:text-brand-blue hover:bg-brand-blue/10 p-1.5 rounded-md transition-colors"
+                              title="መገለጫ (Profile)"
+                            >
+                              <UserCircle2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleRemoveMember(member.id, member.users?.full_name || 'ያልታወቀ')}
+                              disabled={period.status !== 'active'}
+                              className="text-text-secondary hover:text-danger hover:bg-danger/10 p-1.5 rounded-md transition-colors disabled:opacity-30"
+                              title="አስወግድ (Remove)"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -537,17 +558,28 @@ export default function PeriodManagePage() {
 
       {/* Add Member Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-surface-primary rounded-3xl w-full max-w-md p-6 shadow-2xl relative">
-            <button 
-              onClick={() => setShowAddModal(false)}
-              className="absolute top-4 right-4 text-text-muted hover:text-text-primary bg-surface-secondary p-2 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-surface-primary rounded-3xl w-full max-w-4xl shadow-2xl relative max-h-[95vh] flex flex-col border border-border/50 animate-in zoom-in-95 duration-200 overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="px-8 py-6 border-b border-border/50 bg-surface-secondary/30">
+              <button 
+                onClick={() => setShowAddModal(false)}
+                className="absolute top-6 right-6 text-text-muted hover:text-text-primary bg-surface-secondary hover:bg-border p-2 rounded-full transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-            <h2 className="text-2xl font-heading text-text-primary mb-2">አዲስ አባል ጨምር</h2>
-            <p className="text-sm text-text-secondary mb-6">የአባሉን ስም እና ስልክ ያስገቡ። የይለፍ ቃል ተፈጥሮ በፅሁፍ መልዕክት (SMS) ይላካል።</p>
+              <h2 className="text-2xl font-heading text-text-primary mb-2 flex items-center gap-3">
+                <div className="p-2 bg-brand-blue/10 rounded-xl">
+                  <UserCircle2 className="w-6 h-6 text-brand-blue" />
+                </div>
+                አዲስ አባል ጨምር (Add New Member)
+              </h2>
+              <p className="text-sm text-text-secondary ml-11">
+                የአባሉን መረጃ ያስገቡ። ስም፣ ስልክ ቁጥር እና ሚና <span className="text-danger font-medium">ግዴታ</span> ናቸው። የይለፍ ቃል ተፈጥሮ በፅሁፍ መልዕክት (SMS) ይላካል።
+              </p>
+            </div>
 
             {addError && (
               <div className="mb-6 p-3 bg-danger/10 border border-danger/20 text-danger text-sm rounded-lg">
@@ -556,7 +588,7 @@ export default function PeriodManagePage() {
             )}
 
             {addSuccess ? (
-              <div className="text-center py-6">
+              <div className="text-center py-6 flex-1 flex flex-col justify-center">
                 <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <ShieldCheck className="w-8 h-8 text-success" />
                 </div>
@@ -569,44 +601,182 @@ export default function PeriodManagePage() {
                     setShowAddModal(false);
                     setAddSuccess(false);
                   }}
-                  className="w-full bg-surface-secondary text-text-primary px-4 py-2.5 rounded-xl font-medium hover:bg-border transition-colors border border-border"
+                  className="w-full max-w-sm mx-auto bg-surface-secondary text-text-primary px-4 py-2.5 rounded-xl font-medium hover:bg-border transition-colors border border-border"
                 >
                   ዝጋ
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleAddMember} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">ሙሉ ስም</label>
-                  <input
-                    type="text"
-                    required
-                    value={addFullName}
-                    onChange={(e) => setAddFullName(e.target.value)}
-                    className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary placeholder:text-text-muted"
-                    placeholder="አበበ ከበደ"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">ስልክ ቁጥር</label>
-                  <input
-                    type="tel"
-                    required
-                    value={addPhone}
-                    onChange={(e) => setAddPhone(e.target.value)}
-                    className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary placeholder:text-text-muted"
-                    placeholder="0911223344"
-                  />
-                </div>
-                
-                <button
-                  type="submit"
-                  disabled={addLoading || !addFullName || !addPhone}
-                  className="w-full flex items-center justify-center bg-brand-blue text-white px-4 py-3 rounded-xl font-medium transition-colors hover:bg-brand-blue/90 disabled:opacity-50 mt-4"
-                >
-                  {addLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : 'መዝግብ እና SMS ላክ'}
-                </button>
-              </form>
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-surface-primary">
+                <form onSubmit={handleAddMember} className="space-y-8">
+                  
+                  {/* Mandatory Fields Section */}
+                  <div className="bg-brand-blue/[0.03] p-6 rounded-2xl border border-brand-blue/10 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-brand-blue/40"></div>
+                    <div className="flex items-center gap-2 mb-5">
+                      <ShieldCheck className="w-5 h-5 text-brand-blue" />
+                      <h3 className="text-base font-semibold text-text-primary">አስፈላጊ መረጃዎች (Mandatory Fields)</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1.5 flex items-center gap-1">
+                          ሙሉ ስም (Name) <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={addFullName}
+                          onChange={(e) => setAddFullName(e.target.value)}
+                          className="w-full px-4 py-2.5 bg-surface-primary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 focus:border-brand-blue/50 text-text-primary placeholder:text-text-muted shadow-sm transition-all"
+                          placeholder="አበበ ከበደ"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1.5 flex items-center gap-1">
+                          ስልክ ቁጥር (Phone) <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          value={addPhone}
+                          onChange={(e) => setAddPhone(e.target.value)}
+                          className="w-full px-4 py-2.5 bg-surface-primary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 focus:border-brand-blue/50 text-text-primary placeholder:text-text-muted shadow-sm transition-all"
+                          placeholder="0911223344"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-text-secondary mb-1.5 flex items-center gap-1">
+                          የምዘና ሚና (Assessment Role) <span className="text-danger">*</span>
+                        </label>
+                        <select
+                          value={addRole}
+                          onChange={(e) => setAddRole(e.target.value)}
+                          className="w-full px-4 py-2.5 bg-surface-primary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 focus:border-brand-blue/50 text-text-primary font-medium shadow-sm transition-all cursor-pointer"
+                        >
+                          {ROLES.map(role => (
+                            <option key={role.value} value={role.value}>{role.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Optional Profile Fields Section */}
+                  <div className="bg-surface-secondary/40 p-6 rounded-2xl border border-border shadow-sm">
+                    <div className="flex items-center gap-2 mb-5">
+                      <FileCheck className="w-5 h-5 text-text-muted" />
+                      <h3 className="text-base font-semibold text-text-primary">ተጨማሪ መረጃዎች (Optional Profile Fields)</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">ፆታ (Gender)</label>
+                        <select
+                          value={addGender}
+                          onChange={(e) => setAddGender(e.target.value)}
+                          className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary"
+                        >
+                          <option value="">ያልተመረጠ (N/A)</option>
+                          <option value="Male">ወንድ (Male)</option>
+                          <option value="Female">ሴት (Female)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">ዕድሜ (Age)</label>
+                        <input
+                          type="number"
+                          value={addAge}
+                          onChange={(e) => setAddAge(e.target.value)}
+                          className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary placeholder:text-text-muted"
+                          placeholder="N/A"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">የትምህርት ደረጃ (Education)</label>
+                        <input
+                          type="text"
+                          value={addEducationLevel}
+                          onChange={(e) => setAddEducationLevel(e.target.value)}
+                          className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary placeholder:text-text-muted"
+                          placeholder="N/A"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">የትምህርት ዘርፍ (Field)</label>
+                        <input
+                          type="text"
+                          value={addProfessionalField}
+                          onChange={(e) => setAddProfessionalField(e.target.value)}
+                          className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary placeholder:text-text-muted"
+                          placeholder="N/A"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">የስራ ልምድ/አመት (Experience)</label>
+                        <input
+                          type="number"
+                          value={addExpProfessional}
+                          onChange={(e) => setAddExpProfessional(e.target.value)}
+                          className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary placeholder:text-text-muted"
+                          placeholder="N/A"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">የአመራር ልምድ/አመት (Leadership Exp)</label>
+                        <input
+                          type="number"
+                          value={addExpLeadership}
+                          onChange={(e) => setAddExpLeadership(e.target.value)}
+                          className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary placeholder:text-text-muted"
+                          placeholder="N/A"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">ተቋም (Institution)</label>
+                        <input
+                          type="text"
+                          value={addInstitution}
+                          onChange={(e) => setAddInstitution(e.target.value)}
+                          className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary placeholder:text-text-muted"
+                          placeholder="N/A"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">የመንግስት ኃላፊነት (Gov Responsibility)</label>
+                        <input
+                          type="text"
+                          value={addGovResponsibility}
+                          onChange={(e) => setAddGovResponsibility(e.target.value)}
+                          className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary placeholder:text-text-muted"
+                          placeholder="N/A"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">የፓርቲ ኃላፊነት (Party Responsibility)</label>
+                        <input
+                          type="text"
+                          value={addPartyResponsibility}
+                          onChange={(e) => setAddPartyResponsibility(e.target.value)}
+                          className="w-full px-4 py-2 bg-surface-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/50 text-text-primary placeholder:text-text-muted"
+                          placeholder="N/A"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Sticky Submit Button */}
+                  <div className="sticky bottom-0 pt-4 bg-surface-primary">
+                    <button
+                      type="submit"
+                      disabled={addLoading || !addFullName || !addPhone}
+                      className="w-full flex items-center justify-center bg-brand-blue text-white px-6 py-3.5 rounded-xl font-semibold transition-all hover:bg-brand-blue/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-[0.98]"
+                    >
+                      {addLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : 'መዝግብ እና SMS ላክ (Register & Send SMS)'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             )}
           </div>
         </div>

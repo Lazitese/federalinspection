@@ -265,20 +265,28 @@ export function LeadershipEvaluationView({ periodId, members, evaluations }: { p
                         ክብደት: {q.weight}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 mt-2">
                       {[1, 2, 3, 4, 5].map((score) => {
                         const isSelected = currentResponses[q.question_id] === score;
+                        const labels: Record<number, string> = {
+                          1: 'በጣም ዝቅተኛ (Very Low)',
+                          2: 'ዝቅተኛ (Low)',
+                          3: 'መካከለኛ (Medium)',
+                          4: 'ከፍተኛ (High)',
+                          5: 'በጣም ከፍተኛ (Very High)'
+                        };
                         return (
                           <button
                             key={score}
                             onClick={() => handleScoreChange(currentMember.user_id, q.question_id, score)}
-                            className={`flex-1 min-w-[40px] h-10 rounded-lg text-sm font-medium transition-all ${
+                            className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all duration-200 ${
                               isSelected
-                                ? 'bg-brand-blue text-white shadow-md'
-                                : 'bg-surface-secondary text-text-secondary border border-border/50'
-                            } ${!readOnly && !isSelected ? 'hover:bg-border' : ''} ${readOnly ? 'cursor-default' : ''}`}
+                                ? 'bg-brand-blue text-white shadow-md border-brand-blue scale-105 z-10'
+                                : 'bg-surface-secondary text-text-secondary border-border/50'
+                            } ${!readOnly && !isSelected ? 'hover:bg-border/80 hover:text-text-primary' : ''} ${readOnly ? 'cursor-default' : ''}`}
                           >
-                            {score}
+                            <span className="text-base font-bold mb-0.5">{score}</span>
+                            <span className="text-[10px] leading-tight text-center font-medium opacity-90">{labels[score]}</span>
                           </button>
                         );
                       })}

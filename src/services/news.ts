@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { NewsArticle } from '../types';
+import { formatECDate } from '@/lib/date-formatter';
 
 export const newsService = {
   getArticles: async (): Promise<NewsArticle[]> => {
@@ -17,8 +18,8 @@ export const newsService = {
       videoUrl: d.video_url,
       images: d.images || [],
       excerpt: d.excerpt,
-      created: d.created ? new Date(d.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
-      published: d.published ? new Date(d.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
+      created: d.created ? formatECDate(d.created) : '-',
+      published: d.published ? formatECDate(d.published) : '-',
     })) as NewsArticle[];
   },
   
@@ -38,8 +39,8 @@ export const newsService = {
       videoUrl: data.video_url,
       images: data.images || [],
       excerpt: data.excerpt,
-      created: data.created ? new Date(data.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
-      published: data.published ? new Date(data.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
+      created: data.created ? formatECDate(data.created) : '-',
+      published: data.published ? formatECDate(data.published) : '-',
     } as NewsArticle;
   },
   
@@ -50,6 +51,7 @@ export const newsService = {
       video_url: data.videoUrl,
       images: data.images,
       excerpt: data.excerpt,
+      article_type: data.article_type || 'News',
     };
     delete (dbData as any).videoUrl;
 
@@ -67,6 +69,7 @@ export const newsService = {
     const dbData = {
       ...data,
       ...(data.videoUrl !== undefined && { video_url: data.videoUrl }),
+      ...(data.article_type !== undefined && { article_type: data.article_type }),
     };
     delete (dbData as any).videoUrl;
 

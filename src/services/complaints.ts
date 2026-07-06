@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabaseClient';
 import { Complaint, ComplaintStatus } from '../types';
+import { formatECDate, formatECDateTime } from '../lib/date-formatter';
+import { smsService } from './sms';
 
 function generateTrackingCode(): string {
   const prefix = 'TRK';
@@ -26,15 +28,20 @@ function mapRowToComplaint(item: any): Complaint {
     message: item.message,
     requestedResolution: item.requested_resolution,
     attachments: item.attachments || [],
-    date: new Date(item.created_at).toLocaleDateString('am-ET'),
-    createdAt: item.created_at,
-    updatedAt: item.updated_at,
-    processedAt: item.processed_at,
-    resolvedAt: item.resolved_at,
+    date: formatECDate(item.created_at),
+    createdAt: formatECDateTime(item.created_at),
+    updatedAt: item.updated_at ? formatECDateTime(item.updated_at) : undefined,
+    processedAt: item.processed_at ? formatECDateTime(item.processed_at) : undefined,
+    resolvedAt: item.resolved_at ? formatECDateTime(item.resolved_at) : undefined,
     processedBy: item.processed_by,
     resolvedBy: item.resolved_by,
     status: item.status,
     resolution: item.resolution,
+    groupMembers: item.group_members || [],
+    assignedCommittee: item.assigned_committee,
+    serviceName: item.service_name,
+    resolutionRating: item.resolution_rating,
+    resolutionFeedback: item.resolution_feedback,
   };
 }
 
@@ -91,6 +98,8 @@ export const complaintService = {
     message: string;
     requestedResolution?: string;
     files?: File[];
+    groupMembers?: string[];
+    serviceName?: string;
   }): Promise<{ trackingCode: string; id: string } | null> => {
     const trackingCode = generateTrackingCode();
 
@@ -135,6 +144,8 @@ export const complaintService = {
         subject: formData.institution, // institution as subject context
         message: formData.message,
         requested_resolution: formData.requestedResolution || null,
+        group_members: formData.groupMembers || [],
+        service_name: formData.serviceName || null,
         tracking_code: trackingCode,
         attachments,
         status: 'New',
@@ -145,6 +156,34 @@ export const complaintService = {
     if (error) {
       console.error('Error submitting complaint:', error.message, error.details, error.hint, error);
       return null;
+    }
+
+    if (formData.phone) {
+      smsService.sendSMS(
+        formData.phone,
+        `የእርስዎ ${formData.type === 'Suggestion' ? 'ጥቆማ' : 'አቤቱታ'} በተሳካ ሁኔታ ቀርቧል። መከታተያ ኮድ: ${trackingCode}`
+      );
+    }
+
+    const { data: admins } = await supabase
+      .from('admin_profiles')
+      .select('phone, modules, role')
+      .eq('status', 'Active')
+      .not('phone', 'is', null)
+      .neq('phone', '');
+
+    if (admins) {
+      const targetAdmins = admins.filter(a => 
+        a.role === 'super_admin' || 
+        (a.modules && (a.modules.includes('complaints') || a.modules.includes('abetuta') || a.modules.includes('tikoma')))
+      );
+      
+      const adminMessage = `አዲስ ${formData.type === 'Suggestion' ? 'ጥቆማ' : 'አቤቱታ'} ገብቷል። መከታተያ ኮድ: ${trackingCode}`;
+      for (const admin of targetAdmins) {
+        if (admin.phone) {
+          smsService.sendSMS(admin.phone, adminMessage);
+        }
+      }
     }
 
     return { trackingCode, id: data.id };
@@ -201,13 +240,63 @@ export const complaintService = {
       }
     }
 
-    const { error } = await supabase
+    const { data: updatedComplaint, error } = await supabase
       .from('complaints')
       .update(updates)
-      .eq('id', id);
+      .eq('id', id)
+      .select('phone, type')
+      .single();
 
     if (error) {
       console.error('Error updating complaint status:', error);
+      return false;
+    }
+
+    if (updatedComplaint && updatedComplaint.phone) {
+      let statusMsg = '';
+      if (newStatus === 'Processing') {
+         statusMsg = 'በመታየት ላይ ነው';
+      } else if (newStatus === 'Resolved') {
+         statusMsg = 'ውሳኔ አግኝቷል';
+      } else if (newStatus === 'Rejected') {
+         statusMsg = 'ውድቅ ተደርጓል';
+      }
+      
+      if (statusMsg) {
+         smsService.sendSMS(
+           updatedComplaint.phone,
+           `የእርስዎ ${updatedComplaint.type === 'Suggestion' ? 'ጥቆማ' : 'አቤቱታ'} ${statusMsg}።`
+         );
+      }
+    }
+
+    return true;
+  },
+
+  assignCommittee: async (id: string, committeeName: string): Promise<boolean> => {
+    const { error } = await supabase
+      .from('complaints')
+      .update({ assigned_committee: committeeName })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error assigning committee:', error);
+      return false;
+    }
+    return true;
+  },
+
+  submitResolutionReview: async (id: string, rating: number, feedback: string): Promise<boolean> => {
+    const { error } = await supabase
+      .from('complaints')
+      .update({
+        resolution_rating: rating,
+        resolution_feedback: feedback
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error submitting resolution review:', error);
       return false;
     }
     return true;

@@ -19,9 +19,9 @@ const FULL_TEXT = LINE_1 + "\n" + LINE_2;
 const TYPING_SPEED = 80;
 
 const heroStats = [
-  { value: 531894, label: "አባላት", icon: Users },
-  { value: 106174, label: "መዋቅር", icon: Shield },
-  { value: 14, label: "ክልሎች", icon: MapPin },
+  { value: 531894, label: "የኮሚሽን አባላት", icon: Users },
+  { value: 106174, label: "የኮሚሽን መዋቅር", icon: Shield },
+  { value: 14, label: "ክልል/ከተማ.ፌ.ተ.አ", icon: MapPin },
 ];
 
 function AnimatedNumber({ target, duration = 2000 }: { target: number; duration?: number }) {

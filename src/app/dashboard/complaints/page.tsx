@@ -58,6 +58,10 @@ export default function ComplaintsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const resFileRef = useRef<HTMLInputElement>(null);
 
+  // Committee Modal State
+  const [showCommitteeModal, setShowCommitteeModal] = useState(false);
+  const [committeeName, setCommitteeName] = useState('');
+
   // Export Modal State
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportTypes, setExportTypes] = useState<TicketType[]>(['Complaint', 'Suggestion']);
@@ -142,6 +146,24 @@ export default function ComplaintsPage() {
       await loadTickets();
       setShowResolutionModal(false);
       setSelectedTicket(null);
+    }
+    setActionLoading(false);
+  };
+
+  const handleCommitteeAssign = async () => {
+    if (!selectedTicket || !committeeName.trim()) return;
+    setActionLoading(true);
+    
+    const assigned = await complaintService.assignCommittee(selectedTicket.id, committeeName);
+    if (assigned) {
+      if (selectedTicket.status === 'New') {
+        await complaintService.updateComplaintStatus(selectedTicket.id, 'Processing', adminName);
+      }
+      await loadTickets();
+      const updated = await complaintService.getComplaintById(selectedTicket.id);
+      setSelectedTicket(updated);
+      setShowCommitteeModal(false);
+      setCommitteeName('');
     }
     setActionLoading(false);
   };
@@ -453,6 +475,7 @@ export default function ComplaintsPage() {
                   {selectedTicket.gender && <InfoRow icon={IconUser} label="ፆታ" value={selectedTicket.gender} />}
                   {selectedTicket.address && <InfoRow icon={IconMapPin} label="አድራሻ" value={selectedTicket.address} />}
                   {selectedTicket.institution && <InfoRow icon={IconBuilding} label="ተቋም / ክፍል" value={selectedTicket.institution} />}
+                  {selectedTicket.assignedCommittee && <InfoRow icon={IconUser} label="የተመደበለት ኮሚቴ" value={selectedTicket.assignedCommittee} />}
                 </div>
               </div>
 
@@ -538,6 +561,25 @@ export default function ComplaintsPage() {
                 </div>
               )}
 
+              {/* User Review Details */}
+              {selectedTicket.resolutionRating && (
+                <div className="bg-surface-secondary/20 rounded-3xl p-6 border border-border/20">
+                  <h4 className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-4">
+                    የአገልግሎት እርካታ (የተገልጋይ አስተያየት)
+                  </h4>
+                  <div className="flex items-center gap-1 mb-3">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <span key={star} className={`text-xl ${star <= selectedTicket.resolutionRating! ? 'text-amber-400' : 'text-slate-200 dark:text-slate-700'}`}>
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                  {selectedTicket.resolutionFeedback && (
+                    <p className="text-sm text-text-secondary italic">"{selectedTicket.resolutionFeedback}"</p>
+                  )}
+                </div>
+              )}
+
               {/* Timeline */}
               <div className="bg-surface-secondary/20 rounded-3xl p-6 border border-border/20">
                 <h4 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-6 flex items-center gap-2">
@@ -579,17 +621,39 @@ export default function ComplaintsPage() {
               <div className="sticky bottom-0 bg-surface-primary/90 backdrop-blur-xl border-t border-border/20 p-6">
                 <div className="flex gap-3">
                   {selectedTicket.status === 'New' && (
-                    <button
-                      onClick={() => handleStatusChange(selectedTicket.id, 'Processing')}
-                      disabled={actionLoading}
-                      className="flex-1 flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50"
-                    >
-                      <IconPlayerPlay size={18} />
-                      ወደ ሂደት ውሰድ
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleStatusChange(selectedTicket.id, 'Processing')}
+                        disabled={actionLoading}
+                        className="flex-1 flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                      >
+                        <IconPlayerPlay size={18} />
+                        ወደ ሂደት ውሰድ
+                      </button>
+                      {selectedTicket.type === 'Complaint' && (
+                        <button
+                          onClick={() => setShowCommitteeModal(true)}
+                          disabled={actionLoading}
+                          className="flex-1 flex items-center justify-center gap-2 py-3.5 px-6 bg-brand-blue hover:bg-brand-blue/90 text-white rounded-2xl text-sm font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                        >
+                          <IconUser size={18} />
+                          ለኮሚቴ ምደባ
+                        </button>
+                      )}
+                    </>
                   )}
                   {selectedTicket.status === 'Processing' && (
                     <>
+                      {selectedTicket.type === 'Complaint' && (
+                        <button
+                          onClick={() => setShowCommitteeModal(true)}
+                          disabled={actionLoading}
+                          className="flex-1 flex items-center justify-center gap-2 py-3.5 px-6 bg-brand-blue hover:bg-brand-blue/90 text-white rounded-2xl text-sm font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                        >
+                          <IconUser size={18} />
+                          {selectedTicket.assignedCommittee ? 'ኮሚቴ ቀይር' : 'ለኮሚቴ ምደባ'}
+                        </button>
+                      )}
                       <button
                         onClick={() => handleStatusChange(selectedTicket.id, 'Resolved')}
                         disabled={actionLoading}
@@ -691,6 +755,57 @@ export default function ComplaintsPage() {
                 }`}
               >
                 {actionLoading ? 'በመላክ ላይ...' : resolutionAction === 'Resolved' ? 'መፍትሄ ስጥ' : 'ውድቅ አድርግ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Committee Assignment Modal */}
+      {showCommitteeModal && selectedTicket && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCommitteeModal(false)}>
+          <div className="bg-surface-primary rounded-2xl border border-border/30 p-6 max-w-lg w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-semibold text-text-primary">
+                ለኮሚቴ ይመድቡ
+              </h3>
+              <button onClick={() => setShowCommitteeModal(false)} className="p-1.5 hover:bg-surface-secondary rounded-xl transition-colors">
+                <IconX size={20} className="text-text-muted" />
+              </button>
+            </div>
+
+            <p className="text-sm text-text-secondary mb-4">
+              ይህን አቤቱታ የሚያጣራውን የኮሚቴ ስም ያስገቡ።
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-text-primary mb-2 block">
+                  የኮሚቴ ስም *
+                </label>
+                <input
+                  type="text"
+                  value={committeeName}
+                  onChange={(e) => setCommitteeName(e.target.value)}
+                  className="block w-full rounded-xl border border-border/50 bg-surface-secondary/30 px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors"
+                  placeholder="ለምሳሌ፡ አጣሪ ኮሚቴ 1"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowCommitteeModal(false)}
+                className="flex-1 py-2.5 px-4 bg-surface-secondary hover:bg-surface-secondary/80 text-text-primary rounded-xl text-sm font-medium transition-colors border border-border/50"
+              >
+                ሰርዝ
+              </button>
+              <button
+                onClick={handleCommitteeAssign}
+                disabled={actionLoading || !committeeName.trim()}
+                className="flex-1 py-2.5 px-4 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 bg-brand-blue hover:bg-brand-blue/90"
+              >
+                {actionLoading ? 'በመመደብ ላይ...' : 'መደብ'}
               </button>
             </div>
           </div>
