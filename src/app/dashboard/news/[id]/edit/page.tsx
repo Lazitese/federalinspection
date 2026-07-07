@@ -65,10 +65,10 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
         <div className="flex justify-between items-end">
           <div>
             <Link href="/dashboard/news" className="text-xs font-semibold text-brand-blue uppercase tracking-widest hover:underline flex items-center gap-1 mb-2">
-              <IconArrowLeft size={14} stroke={2} /> Back to News
+              <IconArrowLeft size={14} stroke={2} /> Back to {articleType === 'Message' ? 'Messages' : 'News'}
             </Link>
-            <h1 className="text-3xl font-light text-text-primary tracking-tight">Edit News Article</h1>
-            <p className="text-sm text-text-muted mt-1">Updating article #{id.slice(0,8)}</p>
+            <h1 className="text-3xl font-light text-text-primary tracking-tight">Edit {articleType === 'Message' ? 'Message' : 'News Article'}</h1>
+            <p className="text-sm text-text-muted mt-1">Updating {articleType === 'Message' ? 'message' : 'article'} #{id.slice(0,8)}</p>
           </div>
           <div className="flex gap-4">
             <Link href={`/dashboard/news/${id}`} className="flex items-center gap-2 bg-surface-secondary hover:bg-surface-secondary/80 text-text-primary px-5 py-2.5 rounded-full text-sm font-semibold transition-colors border border-border/50">
@@ -83,7 +83,7 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
         
         <div className="bg-surface-primary/30 rounded-[2rem] border border-border/20 p-8 backdrop-blur-md flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Article Title</label>
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">{articleType === 'Message' ? 'Message Title' : 'Article Title'}</label>
             <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-yellow/50 transition-colors" />
           </div>
 
@@ -115,7 +115,7 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Article Body</label>
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">{articleType === 'Message' ? 'Message Body' : 'Article Body'}</label>
             <div className="w-full h-64 bg-surface-primary border border-border/50 rounded-xl p-4 flex flex-col">
               <div className="flex items-center gap-2 border-b border-border/30 pb-3 mb-3">
                 <div className="flex items-center gap-1">

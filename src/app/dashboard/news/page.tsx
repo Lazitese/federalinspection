@@ -13,6 +13,7 @@ export default function NewsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'Published' | 'Draft'>('all');
+  const [activeTab, setActiveTab] = useState<'News' | 'Message'>('News');
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; article: NewsArticle | null }>({ open: false, article: null });
 
   useEffect(() => {
@@ -23,10 +24,11 @@ export default function NewsPage() {
   }, []);
 
   const filteredArticles = articles.filter(article => {
+    const matchesTab = (article.article_type || 'News') === activeTab;
     const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       article.author.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filterStatus === 'all' || article.status === filterStatus;
-    return matchesSearch && matchesFilter;
+    return matchesTab && matchesSearch && matchesFilter;
   });
 
   const handleDelete = async () => {
@@ -37,13 +39,19 @@ export default function NewsPage() {
     }
   };
 
+  const activeArticlesForStats = articles.filter(a => (a.article_type || 'News') === activeTab);
+
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-8 h-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
-            <h1 className="text-3xl font-light text-text-primary tracking-tight">ዜናዎች</h1>
-            <p className="text-sm text-text-muted mt-1">ሁለገብ ቋንቋ ዜናዎችን ያስተዳድሩ።</p>
+            <h1 className="text-3xl font-light text-text-primary tracking-tight">
+              {activeTab === 'News' ? 'ዜናዎች' : 'መልዕክቶች'}
+            </h1>
+            <p className="text-sm text-text-muted mt-1">
+              {activeTab === 'News' ? 'ሁለገብ ቋንቋ ዜናዎችን ያስተዳድሩ።' : 'የተቋሙን መልዕክቶች ያስተዳድሩ።'}
+            </p>
             <div className="flex items-center gap-2 mt-3">
               <div className="h-1 w-8 bg-brand-blue rounded-full"></div>
               <div className="h-1 w-4 bg-brand-yellow rounded-full"></div>
@@ -54,7 +62,7 @@ export default function NewsPage() {
               <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
               <input
                 type="text"
-                placeholder="ዜና ፈልግ..."
+                placeholder={activeTab === 'News' ? "ዜና ፈልግ..." : "መልዕክት ፈልግ..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full sm:w-64 bg-surface-primary/50 border border-border/30 rounded-full pl-10 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors"
@@ -74,38 +82,46 @@ export default function NewsPage() {
             </div>
             <div className="flex gap-2">
               <Link
-                href="/dashboard/news/create"
-                className="flex items-center gap-2 bg-brand-blue hover:bg-brand-blue/90 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm whitespace-nowrap"
+                href={`/dashboard/news/create?type=${activeTab}`}
+                className={`flex items-center gap-2 ${activeTab === 'News' ? 'bg-brand-blue hover:bg-brand-blue/90 text-white' : 'bg-brand-yellow hover:bg-brand-yellow/90 text-[#3D352E]'} px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm whitespace-nowrap`}
               >
                 <IconPlus size={18} />
-                አዲስ ዜና
-              </Link>
-              <Link
-                href="/dashboard/news/create?type=Message"
-                className="flex items-center gap-2 bg-brand-yellow hover:bg-brand-yellow/90 text-[#3D352E] px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm whitespace-nowrap"
-              >
-                <IconPlus size={18} />
-                መልዕክት አጋራ
+                {activeTab === 'News' ? 'አዲስ ዜና' : 'መልዕክት አጋራ'}
               </Link>
             </div>
           </div>
         </div>
 
+        <div className="flex border-b border-border/30">
+          <button 
+            onClick={() => setActiveTab('News')}
+            className={`px-6 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'News' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-text-muted hover:text-text-primary'}`}
+          >
+            ዜና (News)
+          </button>
+          <button 
+            onClick={() => setActiveTab('Message')}
+            className={`px-6 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'Message' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-text-muted hover:text-text-primary'}`}
+          >
+            መልዕክት (Messages)
+          </button>
+        </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-surface-primary/30 rounded-2xl border border-border/20 p-4 backdrop-blur-md">
-            <div className="text-2xl font-light text-text-primary">{articles.length}</div>
-            <div className="text-xs text-text-muted mt-1">ጠቅላላ ዜናዎች</div>
+            <div className="text-2xl font-light text-text-primary">{activeArticlesForStats.length}</div>
+            <div className="text-xs text-text-muted mt-1">ጠቅላላ {activeTab === 'News' ? 'ዜናዎች' : 'መልዕክቶች'}</div>
           </div>
           <div className="bg-surface-primary/30 rounded-2xl border border-border/20 p-4 backdrop-blur-md">
-            <div className="text-2xl font-light text-success">{articles.filter(a => a.status === 'Published').length}</div>
+            <div className="text-2xl font-light text-success">{activeArticlesForStats.filter(a => a.status === 'Published').length}</div>
             <div className="text-xs text-text-muted mt-1">የታተሙ</div>
           </div>
           <div className="bg-surface-primary/30 rounded-2xl border border-border/20 p-4 backdrop-blur-md">
-            <div className="text-2xl font-light text-brand-yellow">{articles.filter(a => a.status === 'Draft').length}</div>
+            <div className="text-2xl font-light text-brand-yellow">{activeArticlesForStats.filter(a => a.status === 'Draft').length}</div>
             <div className="text-xs text-text-muted mt-1">ረቂቆች</div>
           </div>
           <div className="bg-surface-primary/30 rounded-2xl border border-border/20 p-4 backdrop-blur-md">
-            <div className="text-2xl font-light text-brand-blue">{articles.filter(a => a.videoUrl).length}</div>
+            <div className="text-2xl font-light text-brand-blue">{activeArticlesForStats.filter(a => a.videoUrl).length}</div>
             <div className="text-xs text-text-muted mt-1">ቪዲዮ ያላቸው</div>
           </div>
         </div>

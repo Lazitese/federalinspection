@@ -63,6 +63,7 @@ export default function CreateNewsPage() {
         lang: data.language,
         status: data.status as any,
         content: data.body,
+        article_type: data.article_type,
         author: 'Current Admin',
         image: galleryImages[0] || undefined,
         images: galleryImages.length > 0 ? galleryImages : undefined,
@@ -84,10 +85,14 @@ export default function CreateNewsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
             <Link href="/dashboard/news" className="text-xs font-semibold text-brand-blue uppercase tracking-widest hover:underline flex items-center gap-1 mb-2">
-              <IconArrowLeft size={14} stroke={2} /> ወደ ዜና ይመለሱ
+              <IconArrowLeft size={14} stroke={2} /> {watch("article_type") === 'Message' ? 'ወደ መልዕክቶች ይመለሱ' : 'ወደ ዜና ይመለሱ'}
             </Link>
-            <h1 className="text-3xl font-light text-text-primary tracking-tight">አዲስ ዜና ይፍጠሩ</h1>
-            <p className="text-sm text-text-muted mt-1">ለህዝብ ፖርታል አዲስ ዜና ያዘጋጁ።</p>
+            <h1 className="text-3xl font-light text-text-primary tracking-tight">
+              {watch("article_type") === 'Message' ? 'አዲስ መልዕክት ያጋሩ' : 'አዲስ ዜና ይፍጠሩ'}
+            </h1>
+            <p className="text-sm text-text-muted mt-1">
+              {watch("article_type") === 'Message' ? 'ለህዝብ ፖርታል አዲስ መልዕክት ያዘጋጁ።' : 'ለህዝብ ፖርታል አዲስ ዜና ያዘጋጁ።'}
+            </p>
           </div>
           <div className="flex gap-3">
             <button 
@@ -114,7 +119,7 @@ export default function CreateNewsPage() {
             <input 
               {...register("title")} 
               type="text" 
-              placeholder="ለምሳሌ፦ የ2026 ዓመታዊ ሪፖርት..." 
+              placeholder={watch("article_type") === 'Message' ? "የመልዕክቱ ርዕስ..." : "ለምሳሌ፦ የ2026 ዓመታዊ ሪፖርት..."} 
               className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 text-sm text-text-primary focus:outline-none focus:border-brand-blue/50 transition-colors" 
             />
             {errors.title && <span className="text-xs text-danger">{errors.title.message}</span>}
@@ -211,7 +216,9 @@ export default function CreateNewsPage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">የዜና ይዘት</label>
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-widest">
+              {watch("article_type") === 'Message' ? 'የመልዕክት ይዘት' : 'የዜና ይዘት'}
+            </label>
             <div className="w-full bg-surface-primary border border-border/50 rounded-xl p-4 flex flex-col">
               <div className="flex items-center gap-2 border-b border-border/30 pb-3 mb-3">
                 <div className="flex items-center gap-1">
@@ -224,7 +231,7 @@ export default function CreateNewsPage() {
               </div>
               <textarea 
                 {...register("body")} 
-                placeholder="ዜናዎን እዚህ ይጻፉ..." 
+                placeholder={watch("article_type") === 'Message' ? "መልዕክትዎን እዚህ ይጻፉ..." : "ዜናዎን እዚህ ይጻፉ..."} 
                 className="w-full h-64 bg-transparent border-none resize-none focus:outline-none text-sm text-text-primary leading-relaxed"
               ></textarea>
             </div>

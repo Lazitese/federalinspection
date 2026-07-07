@@ -29,9 +29,10 @@ export default function AssessmentLoginPage() {
 
       // Format phone to E.164
       const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+251${cleanPhone.replace(/^0+/, '').replace(/\s+/g, '')}`;
-      const syntheticEmail = `${formattedPhone.replace(/\s+/g, '')}@federal.local`;
+      // Strip '+' from phone for the synthetic email to match how users are created
+      const syntheticEmail = `${formattedPhone.replace(/\s+/g, '').replace('+', '')}@federal.local`;
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: syntheticEmail,
         password: cleanPassword,
       });
@@ -40,7 +41,12 @@ export default function AssessmentLoginPage() {
         throw new Error(error.message === 'Invalid login credentials' ? 'የተሳሳተ ስልክ ቁጥር ወይም የይለፍ ቃል (Invalid credentials)' : error.message);
       }
       
-      router.push('/assessment');
+      // Force change password on first login
+      if (data.user?.user_metadata?.force_password_change) {
+        router.push('/assessment/change-password');
+      } else {
+        router.push('/assessment');
+      }
     } catch (error: any) {
       setErrorMsg(error.message || 'Login failed. Please try again.');
     } finally {

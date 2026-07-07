@@ -9,7 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function main() {
   const email = 'admin@commission.gov';
-  const password = 'Admin£123';
+  const password = 'Admin@123';
 
   // 1. Create or update user
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -21,7 +21,7 @@ async function main() {
   let userId = authData?.user?.id;
 
   if (authError) {
-    if (authError.message.includes('already exists')) {
+    if (authError.message.includes('already exists') || authError.message.includes('already been registered')) {
       console.log('User already exists in auth.users. Fetching ID...');
       const { data: usersData, error: listError } = await supabase.auth.admin.listUsers();
       if (!listError) {

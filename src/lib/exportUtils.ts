@@ -8,6 +8,7 @@ export const exportBulkOverview = (data: any[], fileName: string = 'assessment_o
     'ሚና (Role)': row.role,
     'የራስ ግምገማ (Self - 10%)': row.s10,
     'የገምጋሚ ውጤት (Eval - 20%)': row.s20,
+    'ድምር (Subtotal - 30%)': row.s30,
     'የአጽዳቂ ውጤት (Approver - 70%)': row.s70,
     'አጠቃላይ ድምር (Total - 100%)': row.total
   }));
@@ -36,6 +37,7 @@ export const exportDetailedUserReport = (
     { 'ክፍል (Section)': 'የምዘና ጊዜ (Period)', 'መረጃ (Details)': userOverview.periodName },
     { 'ክፍል (Section)': 'የራስ ግምገማ (10)', 'መረጃ (Details)': userOverview.s10 },
     { 'ክፍል (Section)': 'የገምጋሚ ውጤት (20)', 'መረጃ (Details)': userOverview.s20 },
+    { 'ክፍል (Section)': 'ድምር (30)', 'መረጃ (Details)': userOverview.s30 },
     { 'ክፍል (Section)': 'የአጽዳቂ ውጤት (70)', 'መረጃ (Details)': userOverview.s70 },
     { 'ክፍል (Section)': 'አጠቃላይ ድምር (100)', 'መረጃ (Details)': userOverview.total }
   ];

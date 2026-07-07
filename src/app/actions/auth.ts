@@ -41,7 +41,7 @@ export async function registerUserAction(formData: FormData) {
     let password = (formData.get('password') as string)?.trim() || '';
 
     if (!periodId || !fullName || !rawPhone) {
-      return { error: 'Missing required fields' };
+      return { error: 'እባክዎ አስፈላጊ መረጃዎችን ያስገቡ (Missing required fields)' };
     }
 
     // Format phone number to E.164 standard (e.g. +251...)
@@ -80,7 +80,7 @@ export async function registerUserAction(formData: FormData) {
       
       const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(userId, updatePayload);
       if (updateErr && !updateErr.message.includes('already been registered')) {
-        return { error: 'Failed to update existing user authentication: ' + updateErr.message };
+        return { error: 'የተጠቃሚ መረጃን ማስተካከል አልተቻለም (Failed to update existing user)' };
       }
     } else {
       // Create a brand new user
@@ -92,7 +92,7 @@ export async function registerUserAction(formData: FormData) {
       });
 
       if (authError) {
-        return { error: authError.message };
+        return { error: 'አዲስ ተጠቃሚ መፍጠር አልተቻለም (Failed to create new user)' };
       }
       userId = authData.user.id;
     }
@@ -103,7 +103,7 @@ export async function registerUserAction(formData: FormData) {
       .upsert({ id: userId, phone_number: phone, full_name: fullName });
 
     if (usersError) {
-      return { error: 'Failed to update user profile' };
+      return { error: 'የተጠቃሚውን መገለጫ ማዘመን አልተቻለም (Failed to update user profile)' };
     }
 
     // 3. Insert into period_members
@@ -113,8 +113,14 @@ export async function registerUserAction(formData: FormData) {
 
     if (memberError) {
       // If the user was already a member, insert will fail depending on unique constraints.
-      // Assuming conflict doesn't happen for a newly created user.
-      return { error: 'Failed to add user to period' };
+      console.error("Member Error:", memberError);
+      
+      let userFriendlyMessage = 'ይህንን አባል መጨመር አልተቻለም (Failed to add member to team).';
+      if (memberError.code === '23505') {
+        userFriendlyMessage = 'ይህ ተጠቃሚ ቀድሞውኑ በዚህ ምዘና ላይ ተመዝግቧል (This user is already registered for this team).';
+      }
+      
+      return { error: userFriendlyMessage };
     }
 
     // Upsert user profile
@@ -151,7 +157,7 @@ export async function registerUserAction(formData: FormData) {
     return { success: true };
   } catch (error: any) {
     console.error("Registration action error:", error);
-    return { error: error.message || 'An unexpected error occurred' };
+    return { error: 'ያልተጠበቀ ስህተት አጋጥሟል (An unexpected error occurred)' };
   }
 }
 
@@ -163,18 +169,6 @@ export async function resolveLoginEmail(identifier: string) {
   }
 
   if (lowerId === 'admin') {
-    // Attempt to return the primary admin email
-    const { data: defaultAdmin } = await supabaseAdmin
-      .from('admin_profiles')
-      .select('email')
-      .eq('role', 'super_admin')
-      .limit(1)
-      .maybeSingle();
-      
-    if (defaultAdmin?.email) {
-      return { email: defaultAdmin.email };
-    }
-    // Fallback just in case
     return { email: 'admin@commission.gov' };
   }
 
@@ -189,7 +183,7 @@ export async function resolveLoginEmail(identifier: string) {
   const { data: adminData } = await supabaseAdmin
     .from('admin_profiles')
     .select('email')
-    .eq('phone', phone)
+    .or(`phone.eq.${phone},phone.eq.${cleanPhone}`)
     .maybeSingle();
 
   if (adminData?.email) {
@@ -200,7 +194,7 @@ export async function resolveLoginEmail(identifier: string) {
   return { email: `${phone.replace(/\s+/g, '').replace('+', '')}@federal.local` };
 }
 
-export async function resetPasswordAction(rawPhone: string) {
+export async function resetPasswordAction(rawPhone: string, role: 'assessment' | 'representative' = 'assessment') {
   try {
     if (!rawPhone) return { error: 'Phone number is required' };
 
@@ -237,12 +231,29 @@ export async function resetPasswordAction(rawPhone: string) {
       return { error: 'User not found' };
     }
 
+    // Check if the user is actually a representative if the role is representative
+    if (role === 'representative') {
+      const { data: profile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('system_role')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (profile?.system_role !== 'representative') {
+        return { error: 'User is not a representative' };
+      }
+    }
+
     // 2. Generate new password
     const newPassword = crypto.randomBytes(4).toString('hex'); // 8 characters
 
     // 3. Force update password
+    const userMetadata = role === 'representative' 
+      ? { requires_password_change: true } 
+      : { force_password_change: true };
+
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      password: newPassword
+      password: newPassword,
+      user_metadata: userMetadata
     });
 
     if (updateError) {
@@ -250,7 +261,8 @@ export async function resetPasswordAction(rawPhone: string) {
     }
 
     // 4. Send SMS via Textbee
-    const loginUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/assessment/login`;
+    const loginPath = role === 'representative' ? '/representative/login' : '/assessment/login';
+    const loginUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}${loginPath}`;
     const smsMessage = `ሰላም ${userName}፣ የይለፍ ቃልዎ ተቀይሯል።\nአዲሱ የይለፍ ቃል (New Password): ${newPassword}\nመግቢያ (Link): ${loginUrl}`;
 
     const smsResult = await sendSMS(phone, smsMessage);

@@ -16,7 +16,7 @@ export const smsService = {
         return false;
       }
       
-      const response = await fetch('https://api.textbee.net/api/v1/gateway/devices/send-sms', {
+      const response = await fetch(`https://api.textbee.dev/api/v1/gateway/devices/${deviceId}/sendSMS`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,8 +24,7 @@ export const smsService = {
         },
         body: JSON.stringify({
           receivers: [to],
-          smsBody: message,
-          deviceId: deviceId,
+          smsBody: message
         }),
       });
 

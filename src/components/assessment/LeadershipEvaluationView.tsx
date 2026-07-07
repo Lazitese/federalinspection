@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { LEADERSHIP_EVALUATION_QUESTIONS_20 } from '@/lib/assessment-data';
 
@@ -175,9 +175,20 @@ export function LeadershipEvaluationView({ periodId, members, evaluations }: { p
         <div className="mb-8 sticky top-0 bg-background/95 backdrop-blur-md py-4 z-20 border-b border-border/50">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-2xl font-heading text-text-primary">የአመራር ግምገማ (Leadership Evaluation)</h1>
-            <span className="text-sm font-medium text-text-muted">
+            <span className="text-sm font-medium text-text-muted bg-surface-secondary px-3 py-1 rounded-full">
               {currentIndex + 1} / {members.length}
             </span>
+          </div>
+          
+          <div className="bg-brand-blue/5 border border-brand-blue/20 rounded-xl p-4 mb-4 text-left">
+            <h3 className="font-semibold text-brand-blue flex items-center gap-2 mb-2">
+              <CheckCircle2 className="w-5 h-5" />
+              መመሪያ (Instructions):
+            </h3>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              1. ከታች ያሉትን አባላት በመምረጥ ለእያንዳንዱ አባል ከ1 እስከ 5 ውጤት ይስጡ (Select members below and score them 1 to 5).<br/>
+              2. የሁሉንም አባላት ግምገማ ሲያጠናቅቁ "ሁሉንም ግምገማዎች ላክ" የሚለውን ይጫኑ (Click 'Submit All' when everyone is evaluated).
+            </p>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar snap-x">
             {members.map((m, idx) => {
@@ -244,58 +255,85 @@ export function LeadershipEvaluationView({ periodId, members, evaluations }: { p
           </div>
         )}
 
-        <div className="space-y-8 mb-8">
-          {LEADERSHIP_EVALUATION_QUESTIONS_20.map((category) => (
-            <div key={category.category_id} className="premium-card overflow-hidden border border-border shadow-sm">
-              <div className="bg-surface-secondary px-6 py-4 border-b border-border">
-                <h2 className="text-lg font-heading font-semibold text-text-primary">
-                  {category.category_id}. {category.category_name}
-                </h2>
-                <p className="text-sm text-text-secondary mt-1">ክብደት (Weight): {category.total_weight}</p>
-              </div>
-              <div className="divide-y divide-border/50">
-                {category.questions.map((q) => (
-                  <div key={q.question_id} className="p-4 sm:p-6 hover:bg-surface-secondary/20 transition-colors">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2 sm:gap-4">
-                      <p className="text-sm font-medium text-text-primary leading-relaxed flex-1">
-                        <span className="text-brand-blue bg-brand-blue/10 px-2 py-0.5 rounded text-xs mr-2">{q.question_id}</span>
-                        {q.criteria}
-                      </p>
-                      <span className="text-xs font-medium text-brand-blue bg-brand-blue/10 px-2 py-1 rounded-md shrink-0 self-start">
-                        ክብደት: {q.weight}
-                      </span>
+        <div className="space-y-6 mb-8">
+          {LEADERSHIP_EVALUATION_QUESTIONS_20.map((category) => {
+            let catAnswered = 0;
+            const catTotal = category.questions.length;
+            category.questions.forEach(q => {
+              if (currentResponses[q.question_id] !== undefined) catAnswered++;
+            });
+            const catComplete = catAnswered === catTotal;
+
+            return (
+              <div key={category.category_id} className="premium-card overflow-hidden border border-border/60 shadow-sm bg-surface-primary rounded-xl">
+                <div className="px-5 py-4 flex items-center justify-between bg-surface-secondary/30 border-b border-border/60">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${catComplete ? 'bg-success/10 text-success' : 'bg-surface-secondary text-text-secondary'}`}>
+                      {catComplete ? <CheckCircle2 className="w-5 h-5" /> : <span className="font-bold text-sm">{category.category_id}</span>}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 mt-2">
-                      {[1, 2, 3, 4, 5].map((score) => {
-                        const isSelected = currentResponses[q.question_id] === score;
-                        const labels: Record<number, string> = {
-                          1: 'በጣም ዝቅተኛ (Very Low)',
-                          2: 'ዝቅተኛ (Low)',
-                          3: 'መካከለኛ (Medium)',
-                          4: 'ከፍተኛ (High)',
-                          5: 'በጣም ከፍተኛ (Very High)'
-                        };
-                        return (
-                          <button
-                            key={score}
-                            onClick={() => handleScoreChange(currentMember.user_id, q.question_id, score)}
-                            className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all duration-200 ${
-                              isSelected
-                                ? 'bg-brand-blue text-white shadow-md border-brand-blue scale-105 z-10'
-                                : 'bg-surface-secondary text-text-secondary border-border/50'
-                            } ${!readOnly && !isSelected ? 'hover:bg-border/80 hover:text-text-primary' : ''} ${readOnly ? 'cursor-default' : ''}`}
-                          >
-                            <span className="text-base font-bold mb-0.5">{score}</span>
-                            <span className="text-[10px] leading-tight text-center font-medium opacity-90">{labels[score]}</span>
-                          </button>
-                        );
-                      })}
+                    <div>
+                      <h2 className="text-lg font-heading font-semibold text-text-primary">
+                        {category.category_name}
+                      </h2>
                     </div>
                   </div>
-                ))}
+                  <span className={`text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full ${catComplete ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                    {catAnswered} / {catTotal}
+                  </span>
+                </div>
+                
+                <div className="flex flex-col">
+                  <div className="hidden sm:flex bg-surface-secondary/20 border-b border-border/40 p-3">
+                    <div className="w-1/2 pl-5 text-sm font-semibold text-text-secondary">መስፈርት (Criteria)</div>
+                    <div className="w-1/2 flex justify-between">
+                      <div className="flex-1 text-center text-xs font-semibold text-text-secondary">1<br/><span className="text-[10px] font-normal text-text-muted">በጣም ዝቅተኛ</span></div>
+                      <div className="flex-1 text-center text-xs font-semibold text-text-secondary">2<br/><span className="text-[10px] font-normal text-text-muted">ዝቅተኛ</span></div>
+                      <div className="flex-1 text-center text-xs font-semibold text-text-secondary">3<br/><span className="text-[10px] font-normal text-text-muted">መካከለኛ</span></div>
+                      <div className="flex-1 text-center text-xs font-semibold text-text-secondary">4<br/><span className="text-[10px] font-normal text-text-muted">ከፍተኛ</span></div>
+                      <div className="flex-1 text-center text-xs font-semibold text-text-secondary">5<br/><span className="text-[10px] font-normal text-text-muted">በጣም ከፍተኛ</span></div>
+                    </div>
+                  </div>
+                  
+                  {category.questions.map((q) => (
+                    <div key={q.question_id} className="flex flex-col sm:flex-row border-b border-border/20 hover:bg-surface-secondary/20 transition-colors p-4 sm:p-3 sm:pl-5">
+                      <div className="w-full sm:w-1/2 mb-4 sm:mb-0 sm:pr-4 flex items-start">
+                        <div className="flex gap-2 w-full">
+                          <span className="text-xs font-bold text-brand-blue bg-brand-blue/10 px-1.5 py-0.5 rounded self-start mt-0.5 shrink-0">
+                            {q.question_id}
+                          </span>
+                          <span className="text-[14px] sm:text-sm text-text-primary leading-snug">
+                            {q.criteria}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full sm:w-1/2 flex justify-between items-start bg-surface-secondary/30 sm:bg-transparent p-3 sm:p-0 rounded-xl border border-border/40 sm:border-transparent">
+                        {[1, 2, 3, 4, 5].map((score) => {
+                          const isSelected = currentResponses[q.question_id] === score;
+                          const labels: Record<number, string> = {
+                            1: 'በጣም ዝቅተኛ',
+                            2: 'ዝቅተኛ',
+                            3: 'መካከለኛ',
+                            4: 'ከፍተኛ',
+                            5: 'በጣም ከፍተኛ'
+                          };
+                          return (
+                            <div key={score} className="flex-1 flex flex-col items-center justify-start" onClick={() => !readOnly && handleScoreChange(currentMember.user_id, q.question_id, score)}>
+                              <div className={`w-10 h-10 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-base transition-all ${readOnly ? 'cursor-default' : 'cursor-pointer hover:scale-105'} ${isSelected ? 'bg-brand-blue text-white shadow-md scale-110' : 'bg-surface-primary sm:bg-surface-secondary text-text-secondary border border-border/60 hover:bg-border/80'}`}>
+                                {score}
+                              </div>
+                              <span className={`sm:hidden text-[9px] text-center mt-1 leading-tight px-0.5 ${isSelected ? 'text-brand-blue font-semibold' : 'text-text-muted font-medium'}`}>
+                                {labels[score]}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="premium-card p-4 sticky bottom-4 shadow-xl border-border z-10 flex flex-row gap-3 bg-surface-primary/95 backdrop-blur-md">

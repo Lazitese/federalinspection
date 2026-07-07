@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createBrowserClient } from "@supabase/ssr";
 import { IconLoader2, IconKey } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 
@@ -11,6 +11,11 @@ export default function ChangePasswordPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   useEffect(() => {
     async function checkAuth() {
@@ -22,7 +27,7 @@ export default function ChangePasswordPage() {
       }
     }
     checkAuth();
-  }, [router]);
+  }, [router, supabase]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

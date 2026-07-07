@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SELF_ASSESSMENT_QUESTIONS } from '@/lib/assessment-data';
 
@@ -72,7 +72,7 @@ export function SelfAssessmentView({ periodId, existingData, readOnly = false }:
       }
     } catch (err: any) {
       setError(err.message || 'Failed to save assessment');
-      showToast('ማስቀመጥ አልተሳካም (Failed to save)', 'error');
+      showToast(`ማስቀመጥ አልተሳካም: ${err.message || 'Unknown error'}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -90,19 +90,24 @@ export function SelfAssessmentView({ periodId, existingData, readOnly = false }:
       )}
 
       <div className="max-w-3xl w-full">
-        <div className="mb-10 mt-4 text-center">
+        <div className="mb-8 mt-4 text-center">
           <div className="inline-flex items-center justify-center p-3 bg-brand-blue/10 rounded-2xl mb-4">
             <svg className="w-8 h-8 text-brand-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <h1 className="text-4xl font-heading text-text-primary tracking-tight mb-3">የራስ ግምገማ <span className="text-brand-blue text-2xl ml-2 font-sans font-medium">(Self Assessment)</span></h1>
-          <p className="text-text-secondary text-lg max-w-2xl mx-auto leading-relaxed">
-            {readOnly ? 'ይህ ያቀረቡት የራስዎ ግምገማ ነው። (This is your submitted self assessment.)' : 'እባክዎን ከታች ያሉትን መስፈርቶች መሰረት በማድረግ እራስዎን ይገምግሙ።'}
-            <span className="block mt-2 font-medium bg-surface-secondary inline-block px-4 py-1.5 rounded-full text-sm">
-              <span className="text-danger mr-1">1 = በጣም ደካማ</span> | <span className="text-success ml-1">5 = በጣም ጥሩ</span>
-            </span>
-          </p>
+          
+          <div className="bg-brand-blue/5 border border-brand-blue/20 rounded-xl p-4 max-w-2xl mx-auto mt-4 text-left">
+            <h3 className="font-semibold text-brand-blue flex items-center gap-2 mb-2">
+              <CheckCircle2 className="w-5 h-5" />
+              መመሪያ (Instructions):
+            </h3>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              1. መስፈርቱን ያንብቡ (Read the criteria).<br/>
+              2. ከ1 (በጣም ደካማ) እስከ 5 (በጣም ጥሩ) ያለውን ቁጥር ይምረጡ (Select a number from 1 to 5).
+            </p>
+          </div>
         </div>
 
         {error && (
@@ -112,65 +117,85 @@ export function SelfAssessmentView({ periodId, existingData, readOnly = false }:
           </div>
         )}
 
-        <div className="space-y-8 mb-24">
-          {SELF_ASSESSMENT_QUESTIONS.map((category) => (
-            <div key={category.category_id} className="premium-card overflow-hidden border border-border/60 shadow-md hover:shadow-lg transition-shadow bg-surface-primary">
-              <div className="bg-gradient-to-r from-surface-secondary to-background px-6 py-5 border-b border-border/60 flex items-center justify-between">
-                <h2 className="text-xl font-heading font-semibold text-text-primary">
-                  {category.category_id}. {category.category_name}
-                </h2>
-                <span className="text-sm font-medium bg-surface-primary px-3 py-1 rounded-full text-text-secondary shadow-sm border border-border/50">
-                  ክብደት: {category.total_weight}
-                </span>
-              </div>
-              <div className="divide-y divide-border/40">
-                {category.questions.map((q) => (
-                  <div key={q.question_id} className="p-6 transition-colors hover:bg-surface-secondary/20">
-                    <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
-                      <p className="text-[15px] font-medium text-text-primary leading-relaxed flex-1">
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-brand-blue/10 text-brand-blue text-xs mr-3 shrink-0">
-                          {q.question_id.split('.')[1]}
-                        </span>
-                        {q.criteria}
-                      </p>
-                      <span className="text-xs font-semibold text-brand-blue bg-brand-blue/10 px-2.5 py-1 rounded-md shrink-0 border border-brand-blue/20">
-                        ክብደት: {q.weight}
-                      </span>
+        <div className="space-y-6 mb-32">
+          {SELF_ASSESSMENT_QUESTIONS.map((category) => {
+            let catAnswered = 0;
+            const catTotal = category.questions.length;
+            category.questions.forEach(q => {
+              if (responses[q.question_id] !== undefined) catAnswered++;
+            });
+            const catComplete = catAnswered === catTotal;
+
+            return (
+              <div key={category.category_id} className="premium-card overflow-hidden border border-border/60 shadow-sm bg-surface-primary rounded-xl">
+                <div className="px-5 py-4 flex items-center justify-between bg-surface-secondary/30 border-b border-border/60">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${catComplete ? 'bg-success/10 text-success' : 'bg-surface-secondary text-text-secondary'}`}>
+                      {catComplete ? <CheckCircle2 className="w-5 h-5" /> : <span className="font-bold text-sm">{category.category_id}</span>}
                     </div>
-                    
-                    <div className="flex flex-col mt-2">
-                      <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 sm:gap-3">
+                    <div>
+                      <h2 className="text-lg font-heading font-semibold text-text-primary">
+                        {category.category_name}
+                      </h2>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full ${catComplete ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                    {catAnswered} / {catTotal}
+                  </span>
+                </div>
+                
+                <div className="flex flex-col">
+                  <div className="hidden sm:flex bg-surface-secondary/20 border-b border-border/40 p-3">
+                    <div className="w-1/2 pl-5 text-sm font-semibold text-text-secondary">መስፈርት (Criteria)</div>
+                    <div className="w-1/2 flex justify-between">
+                      <div className="flex-1 text-center text-xs font-semibold text-text-secondary">1<br/><span className="text-[10px] font-normal text-text-muted">በጣም ዝቅተኛ</span></div>
+                      <div className="flex-1 text-center text-xs font-semibold text-text-secondary">2<br/><span className="text-[10px] font-normal text-text-muted">ዝቅተኛ</span></div>
+                      <div className="flex-1 text-center text-xs font-semibold text-text-secondary">3<br/><span className="text-[10px] font-normal text-text-muted">መካከለኛ</span></div>
+                      <div className="flex-1 text-center text-xs font-semibold text-text-secondary">4<br/><span className="text-[10px] font-normal text-text-muted">ከፍተኛ</span></div>
+                      <div className="flex-1 text-center text-xs font-semibold text-text-secondary">5<br/><span className="text-[10px] font-normal text-text-muted">በጣም ከፍተኛ</span></div>
+                    </div>
+                  </div>
+                  
+                  {category.questions.map((q) => (
+                    <div key={q.question_id} className="flex flex-col sm:flex-row border-b border-border/20 hover:bg-surface-secondary/20 transition-colors p-4 sm:p-3 sm:pl-5">
+                      <div className="w-full sm:w-1/2 mb-4 sm:mb-0 sm:pr-4 flex items-start">
+                        <div className="flex gap-2 w-full">
+                          <span className="text-xs font-bold text-brand-blue bg-brand-blue/10 px-1.5 py-0.5 rounded self-start mt-0.5 shrink-0">
+                            {q.question_id.split('.')[1]}
+                          </span>
+                          <span className="text-[14px] sm:text-sm text-text-primary leading-snug">
+                            {q.criteria}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full sm:w-1/2 flex justify-between items-start bg-surface-secondary/30 sm:bg-transparent p-3 sm:p-0 rounded-xl border border-border/40 sm:border-transparent">
                         {[1, 2, 3, 4, 5].map((score) => {
                           const isSelected = responses[q.question_id] === score;
                           const labels: Record<number, string> = {
-                            1: 'በጣም ዝቅተኛ (Very Low)',
-                            2: 'ዝቅተኛ (Low)',
-                            3: 'መካከለኛ (Medium)',
-                            4: 'ከፍተኛ (High)',
-                            5: 'በጣም ከፍተኛ (Very High)'
+                            1: 'በጣም ዝቅተኛ',
+                            2: 'ዝቅተኛ',
+                            3: 'መካከለኛ',
+                            4: 'ከፍተኛ',
+                            5: 'በጣም ከፍተኛ'
                           };
                           return (
-                            <button
-                              key={score}
-                              onClick={() => handleScoreChange(q.question_id, score)}
-                              className={`flex flex-col items-center justify-center p-2 sm:py-3 rounded-xl border transition-all duration-200 ${
-                                isSelected
-                                  ? 'bg-brand-blue text-white shadow-md border-brand-blue scale-105 z-10'
-                                  : 'bg-surface-secondary text-text-secondary border-border/60'
-                              } ${!readOnly && !isSelected ? 'hover:bg-border/80 hover:text-text-primary' : ''} ${readOnly ? 'cursor-default' : ''}`}
-                            >
-                              <span className="text-lg font-bold mb-1">{score}</span>
-                              <span className="text-[10px] sm:text-xs leading-tight text-center font-medium opacity-90">{labels[score]}</span>
-                            </button>
+                            <div key={score} className="flex-1 flex flex-col items-center justify-start" onClick={() => !readOnly && handleScoreChange(q.question_id, score)}>
+                              <div className={`w-10 h-10 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-base transition-all ${readOnly ? 'cursor-default' : 'cursor-pointer hover:scale-105'} ${isSelected ? 'bg-brand-blue text-white shadow-md scale-110' : 'bg-surface-primary sm:bg-surface-secondary text-text-secondary border border-border/60 hover:bg-border/80'}`}>
+                                {score}
+                              </div>
+                              <span className={`sm:hidden text-[9px] text-center mt-1 leading-tight px-0.5 ${isSelected ? 'text-brand-blue font-semibold' : 'text-text-muted font-medium'}`}>
+                                {labels[score]}
+                              </span>
+                            </div>
                           );
                         })}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border z-40 sm:sticky sm:bottom-4 sm:bg-surface-primary sm:rounded-2xl sm:border sm:shadow-2xl sm:p-6">

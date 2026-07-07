@@ -466,6 +466,7 @@ export type Database = {
         Row: {
           created_at: string
           final_score_100: number
+          score_30: number
           id: string
           period_id: string
           user_id: string
@@ -473,6 +474,7 @@ export type Database = {
         Insert: {
           created_at?: string
           final_score_100?: number
+          score_30?: number
           id?: string
           period_id: string
           user_id: string
@@ -480,6 +482,7 @@ export type Database = {
         Update: {
           created_at?: string
           final_score_100?: number
+          score_30?: number
           id?: string
           period_id?: string
           user_id?: string

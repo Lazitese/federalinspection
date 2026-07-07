@@ -136,10 +136,16 @@ export default function FormsLoginPage() {
             </button>
           </form>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 text-center space-y-4">
+            <Link
+              href="/representative/reset-password"
+              className="block text-sm text-brand-blue hover:underline transition-colors font-medium"
+            >
+              የይለፍ ቃል ረሱ? (Forgot Password?)
+            </Link>
             <Link
               href="/"
-              className="text-sm text-text-secondary hover:text-brand-blue transition-colors font-medium"
+              className="inline-block text-sm text-text-secondary hover:text-brand-blue transition-colors font-medium"
             >
               &larr; Back to Home
             </Link>

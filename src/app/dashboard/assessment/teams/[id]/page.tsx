@@ -299,6 +299,7 @@ export default function PeriodManagePage() {
         role: roleLabel,
         s10: userScores.s10,
         s20: userScores.s20,
+        s30: Number((userScores.s10 + userScores.s20).toFixed(2)),
         s70: userScores.s70,
         total: period?.status === 'finalized' ? userScores.f100 : currentTotal
       };
@@ -442,6 +443,7 @@ export default function PeriodManagePage() {
                     <th className="px-2 py-3">ሚና (Role)</th>
                     <th className="px-2 py-3 text-center">የራስ (10)</th>
                     <th className="px-2 py-3 text-center">የገምጋሚ (20)</th>
+                    <th className="px-2 py-3 text-center font-semibold text-brand-blue/80">ድምር (30)</th>
                     <th className="px-2 py-3 text-center">የአጽዳቂ (70)</th>
                     <th className="px-2 py-3 text-center text-brand-blue">ድምር (100)</th>
                     <th className="pl-2 py-3 text-right">ድርጊት</th>
@@ -510,6 +512,13 @@ export default function PeriodManagePage() {
                         <td className="px-2 py-3 text-center">
                           {userScores.s20 > 0 ? (
                             <span className="text-text-secondary">{userScores.s20}</span>
+                          ) : (
+                            <span className="text-border">-</span>
+                          )}
+                        </td>
+                        <td className="px-2 py-3 text-center font-medium text-text-primary">
+                          {(userScores.s10 > 0 || userScores.s20 > 0) ? (
+                            Number((userScores.s10 + userScores.s20).toFixed(2))
                           ) : (
                             <span className="text-border">-</span>
                           )}
