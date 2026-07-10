@@ -53,18 +53,18 @@ export default async function RepHistoryPage() {
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#0a0a0a] p-4 sm:p-8">
       <div className="max-w-4xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex bg-surface-primary p-1 rounded-xl shadow-sm border border-border-light w-fit">
-          <a
+          <Link
             href="/representative/dashboard"
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all text-text-secondary hover:text-brand-blue hover:bg-brand-blue/5"
           >
             አዲስ ሪፖርት (Current Report)
-          </a>
-          <a
+          </Link>
+          <Link
             href="/representative/dashboard/history"
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-brand-blue text-white shadow-md"
           >
             የሪፖርት ታሪክ (History)
-          </a>
+          </Link>
         </div>
         <form action="/auth/signout" method="post">
           <button type="submit" className="text-sm font-medium text-text-secondary hover:text-brand-blue px-4 py-2 rounded-lg hover:bg-surface-secondary transition-all">
