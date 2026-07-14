@@ -4,6 +4,7 @@ import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import AgentSightWrapper from "@/components/AgentSightWrapper";
+
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
