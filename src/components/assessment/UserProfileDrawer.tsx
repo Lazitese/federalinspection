@@ -318,7 +318,7 @@ export function UserProfileDrawer({ isOpen, onClose, userId, periodId }: UserPro
                         src={formData.photo_url} 
                         alt="Profile" 
                         fill 
-                        className="object-cover"
+                        className="object-cover object-top"
                       />
                     ) : (
                       <span className="text-4xl font-bold text-brand-blue">

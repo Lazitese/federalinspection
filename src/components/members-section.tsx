@@ -97,13 +97,13 @@ export function MembersSection() {
             {currentOffice.map((member) => (
               <div key={member.id} className="shrink-0 snap-start w-[85vw] sm:w-[360px] md:w-[400px]">
                 <div className="group overflow-hidden rounded-3xl bg-white p-2 shadow-[0_4px_20px_-6px_rgba(0,0,0,0.06)] ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.10)]">
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-slate-100">
+                  <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-slate-100">
                     {member.photo ? (
                       <Image
                         src={member.photo}
                         alt={member.nameAm || member.name}
                         fill
-                        className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width: 640px) 85vw, 400px"
                       />
                     ) : (

@@ -68,7 +68,7 @@ export default function PersonnelPage() {
         <div className="relative shrink-0">
           {person.photo ? (
             <div className="w-24 h-24 rounded-3xl overflow-hidden border-[3px] border-surface-primary shadow-lg relative ring-1 ring-border/20">
-              <Image src={person.photo} alt={person.name} fill className="object-cover" />
+              <Image src={person.photo} alt={person.name} fill className="object-cover object-top" />
             </div>
           ) : (
             <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-surface-secondary to-surface-primary border-2 border-border/30 flex items-center justify-center font-bold text-text-primary text-3xl shadow-sm">
